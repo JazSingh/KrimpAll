@@ -133,11 +133,11 @@ public:
 	virtual bool		NeedsCachedValues() { return false; }
 
 	virtual void		Add(ItemSet *is, uint64 candidateId = UINT64_MAX_VALUE)=0;
-	virtual void 		AddAtIndex(ItemSet *is, uint64 candidateId = UINT64_MAX_VALUE, uint64 idx)=0;
+	virtual void 		AddAtIndex(ItemSet *is, uint64 candidateId = UINT64_MAX_VALUE, uint64 idx=0)=0;
 	virtual void		Del(ItemSet *is, bool zap, bool keepList)=0;
 
 	virtual void		AddAndCommit(ItemSet *is, uint64 candidateId = UINT64_MAX_VALUE) { THROW_NOT_IMPLEMENTED(); }
-	virtual void 		AddAtIndexAndCommit(ItemSet *is, uint64 candidateId = UINT64_MAX_VALUE, uint64 idx)=0;
+	virtual void 		AddAtIndexAndCommit(ItemSet *is, uint64 candidateId = UINT64_MAX_VALUE, uint64 idx=0)=0;
 	virtual void		DelAndCommit(ItemSet *is, bool zap) { THROW_NOT_IMPLEMENTED(); }
 	virtual void		UndoPrune(ItemSet *is) { THROW_NOT_IMPLEMENTED(); }
 

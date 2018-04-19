@@ -6,6 +6,8 @@
 #define FIC_GROEIALGO_H
 
 
+#include "../krimp/KrimpAlgo.h"
+
 class GroeiAlgo: public KrimpAlgo {
 
 };

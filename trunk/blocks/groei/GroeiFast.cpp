@@ -22,11 +22,12 @@ void GroeiFast::Playground() {
                 CodeTable *candidate = tables->GetCodeTable(curTable)->Clone();
                 candidate->AddAndCommit(itemSet, itemSet->GetUniqueID());
                 candidates->Add(candidate);
+            }
+            candidates->SortAndPrune(beamWidth);
+            if (begin(complexities), end(complexities), iteration) {
+                //output results
+            }
+            iteration++;
         }
-        candidates->SortAndPrune(beamWidth);
-        if(begin(complexities), end(complexities), iteration) {
-            //output results
-        }
-        iteration++;
     }
 }
