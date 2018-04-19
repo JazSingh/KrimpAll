@@ -1,6 +1,7 @@
 #ifndef __SLIMTASKHANDLER_H
 #define __SLIMTASKHANDLER_H
 
+#include <isc/ItemSetCollection.h>
 #include "TaskHandler.h"
 
 class Config;

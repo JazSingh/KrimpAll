@@ -1,3 +1,5 @@
+#define ENABLE_SLIM
+#define BLOCK_SLIM
 #ifdef BLOCK_SLIM
 
 #include "../global.h"

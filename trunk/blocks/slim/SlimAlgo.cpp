@@ -1,3 +1,4 @@
+#define BLOCK_SLIM
 #ifdef BLOCK_SLIM
 
 #include <time.h>
