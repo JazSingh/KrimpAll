@@ -17,8 +17,8 @@ IF(UNIX)
 ENDIF(UNIX)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-#include (AddCompilerFlag)
-#include (OptimizeForArchitecture)
+include (AddCompilerFlag)
+include (OptimizeForArchitecture)
 #OptimizeForArchitecture() # doesn't work properly, so let's do it mannualy
 
 IF(NOT CMAKE_BUILD_TYPE MATCHES Debug)

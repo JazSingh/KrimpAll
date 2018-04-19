@@ -1,6 +1,0 @@
-*.conf
-*.log
-.settings
-build
-fic
-LocalFic.h
