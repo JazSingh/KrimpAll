@@ -31,3 +31,11 @@ void CTSet::SortAndPrune(uint32 numTablesRemain) {
 CodeTable *CTSet::GetCodeTable(uint32 index) {
     return nullptr;
 }
+
+void CTSet::SortAndPrune() {
+
+}
+
+uint64 CTSet::GetEncodedSize() {
+    return 0;
+}

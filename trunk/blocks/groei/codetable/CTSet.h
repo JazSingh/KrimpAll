@@ -19,6 +19,10 @@ public:
     uint32      GetNumTables();
     CodeTable*  GetCodeTable(uint32 index);
 
+    void SortAndPrune();
+
+    uint64 GetEncodedSize();
+
 protected:
 
 private:

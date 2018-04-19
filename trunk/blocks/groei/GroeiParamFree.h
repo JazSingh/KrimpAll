@@ -5,9 +5,9 @@
 #ifndef FIC_GROEIPARAMFREE_H
 #define FIC_GROEIPARAMFREE_H
 
-
+#include "Groei.h"
 class GroeiParamFree {
-
+    void Playground();
 };
 
 

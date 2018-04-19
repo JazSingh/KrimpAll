@@ -5,8 +5,13 @@
 #ifndef FIC_GROEIFAST_H
 #define FIC_GROEIFAST_H
 
+#include "codetable/CTSet.h"
+#include "../../bass/isc/ItemSetCollection.h"
+#include "../../bass/itemstructs/ItemSet.h"
+#include "../krimp/codetable/CodeTable.h"
 
 class GroeiFast {
+    void Playground();
 
 };
 
