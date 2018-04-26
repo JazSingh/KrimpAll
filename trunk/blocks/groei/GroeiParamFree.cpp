@@ -18,18 +18,18 @@ void GroeiParamFree::Playground() {
         {
             ItemSet *itemSet = isc->GetNextItemSet();
             for (uint32 curTable = 0; curTable < numTables; curTable++) {
-                CodeTable *codeTable = tables->GetCodeTable(curTable)->Clone();
+                CodeTable *codeTable = tables->NextCodeTable()->Clone();
                 islist *codeTableItemSets = codeTable->GetItemSetList();
                 uint64 numCTIS = codeTableItemSets->size();
                 for (uint64 curIs = 0; curIs < numCTIS; curIs++) {
-                    CodeTable *candidate = tables->GetCodeTable(curTable)->Clone();
-                    candidate->AddAtIndex(itemSet, itemSet->GetUniqueID(), curIs);
+                    CodeTable *candidate = tables->NextCodeTable()->Clone();
+                    candidate->Add(itemSet, itemSet->GetUniqueID());
                     candidates->Add(candidate);
                 }
             }
         }
-        candidates->SortAndPrune();
-        improvement = candidates->GetEncodedSize() < prevEncSize;
+        //candidates->SortAndPrune(10);
+        //improvement = candidates->GetEncodedSize() < prevEncSize;
         iteration++;
     }
 }

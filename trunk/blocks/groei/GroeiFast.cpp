@@ -19,7 +19,7 @@ void GroeiFast::Playground() {
         {
             ItemSet *itemSet = isc->GetNextItemSet();
             for (uint32 curTable = 0; curTable < numTables; curTable++) {
-                CodeTable *candidate = tables->GetCodeTable(curTable)->Clone();
+                CodeTable *candidate = tables->NextCodeTable()->Clone();
                 candidate->AddAndCommit(itemSet, itemSet->GetUniqueID());
                 candidates->Add(candidate);
             }

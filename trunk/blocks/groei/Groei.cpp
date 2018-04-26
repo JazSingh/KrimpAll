@@ -30,12 +30,12 @@ void Groei::Playground() {
         {
             ItemSet *itemSet = isc->GetNextItemSet();
             for (uint32 curTable = 0; curTable < numTables; curTable++) {
-                CodeTable *codeTable = prevBest->GetCodeTable(curTable)->Clone();
+                CodeTable *codeTable = prevBest->NextCodeTable()->Clone();
                 islist *codeTableItemSets = codeTable->GetItemSetList();
                 uint64 numCTIS = codeTableItemSets->size();
                 for (uint64 curIs = 0; curIs < numCTIS; curIs++) {
-                    CodeTable *candidate = prevBest->GetCodeTable(curTable)->Clone();
-                    candidate->AddAtIndex(itemSet, itemSet->GetUniqueID(), curIs);
+                    CodeTable *candidate = prevBest->NextCodeTable()->Clone();
+                    candidate->Add(itemSet, itemSet->GetUniqueID());
                     candidates->Add(candidate);
                 }
             }

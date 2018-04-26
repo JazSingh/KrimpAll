@@ -4,8 +4,19 @@
 
 #include "CTSet.h"
 
+using namespace std;
+
+bool SortingMethod(CodeTable *ct1, CodeTable *ct2) {
+    return ct1->GetCurStats().encSize < ct2->GetCurStats().encSize;
+};
+
+bool SortingMethodReverse(CodeTable *ct1, CodeTable *ct2) {
+    return ct1->GetCurStats().encSize > ct2->GetCurStats().encSize;
+};
+
 CTSet::CTSet() {
-    nTables = 10;
+    codeTables = new ctVec();
+    nTables = 0;
 }
 
 uint32 CTSet::GetNumTables() {
@@ -13,29 +24,34 @@ uint32 CTSet::GetNumTables() {
 }
 
 void CTSet::Add(CodeTable *codeTable) {
-
+    codeTables->push_back(codeTable);
 }
 
 void CTSet::Sort() {
-
+    std::sort(codeTables->begin(), codeTables->end(), SortingMethod);
 }
 
-void CTSet::Prune(uint32 numTablesRemain) {
-
+void CTSet::SortReverse() {
+    std::sort(codeTables->begin(), codeTables->end(), SortingMethodReverse);
 }
 
 void CTSet::SortAndPrune(uint32 numTablesRemain) {
-
+    SortReverse();
+    ctVec *codeTablesNew = new ctVec();
+    for(int i = 0; i < numTablesRemain; i++) {
+        codeTablesNew->push_back(codeTables->front());
+        codeTables->pop_back();
+    }
+    delete codeTables;
+    codeTables = codeTablesNew;
 }
 
-CodeTable *CTSet::GetCodeTable(uint32 index) {
-    return nullptr;
-}
-
-void CTSet::SortAndPrune() {
-
-}
-
-uint64 CTSet::GetEncodedSize() {
-    return 0;
+CodeTable *CTSet::NextCodeTable() {
+    if(*curTable == nullptr) {
+        curTable = codeTables->begin();
+    }
+    if(curTable == codeTables->end()) {
+        curTable = codeTables->begin();
+    }
+    return *curTable++;
 }
