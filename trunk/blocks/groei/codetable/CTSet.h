@@ -8,7 +8,7 @@
 
 #include "../../krimp/codetable/CodeTable.h"
 
-typedef std::list<CodeTable*> ctList;
+//typedef std::list<CodeTable*> ctList;
 typedef std::vector<CodeTable*> ctVec;
 
 class CTSet {
@@ -16,21 +16,20 @@ public:
     CTSet();
     void        Add(CodeTable* codeTable);
     void        Sort();
+    void        SortReverse();
     void        SortAndPrune(uint32 numTablesRemain);
 
+    double AvgCompression();
     uint32      GetNumTables();
     CodeTable*  NextCodeTable();
 
 protected:
 
 private:
+    ctVec   *codeTables;
     ctVec::iterator curTable;
 
     uint32  nTables;
-    //ctList  *codeTables;
-    ctVec   *codeTables;
-
-    void SortReverse();
 };
 
 

@@ -52,6 +52,19 @@ CodeTable *CTSet::NextCodeTable() {
     }
     if(curTable == codeTables->end()) {
         curTable = codeTables->begin();
+        return nullptr;
     }
     return *curTable++;
+}
+
+double CTSet::AvgCompression() {
+    uint64 numTab = GetNumTables();
+    double sumCompression = 0;
+    ctVec::iterator iter;
+    for(iter = codeTables->begin(); iter != codeTables->end(); ++iter) {
+        CodeTable* curTab = *iter;
+        sumCompression += curTab->GetCurStats().encSize;
+    }
+    double avgCompression = sumCompression/numTab;
+    return avgCompression;
 }
