@@ -15,7 +15,7 @@ Groei::Groei(CodeTable *ct, HashPolicyType hashPolicy, Config *config)
 }
 
 CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup) {
-    return KrimpAlgo::DoeJeDing(candidateOffset, startSup);
+
 }
 
 /**
@@ -27,28 +27,27 @@ void Groei::Playground() {
     uint64 iteration = 0;
     uint64 *maxComplexity = max_element(begin(complexities), end(complexities));
     auto *candidates = new CTSet();
-    auto ctAlpha = new CCPUCodeTable();
-    ctAlpha->Clone();
+    auto ctAlpha = mCT->Clone();
+    candidates->Add(ctAlpha);
     while (iteration < *maxComplexity) {
         CTSet *prevBest = candidates;
         candidates = new CTSet();
         auto *isc = new ItemSetCollection();
         uint64 numIsc = isc->GetNumItemSets();
-        uint32 numTables = prevBest->GetNumTables();
         for (uint64 curIsc = 0; curIsc < numIsc; curIsc++);
         {
             ItemSet *itemSet = isc->GetNextItemSet();
-            for (uint32 curTable = 0; curTable < numTables; curTable++) {
-                CodeTable *codeTable = prevBest->NextCodeTable()->Clone();
-                islist *codeTableItemSets = codeTable->GetItemSetList();
-                uint64 numCTIS = codeTableItemSets->size();
 
-            }
-            //while()
+            prevBest->ResetIterator();
+            do {
+                CodeTable *curTable = prevBest->NextCodeTable()->Clone();
+                curTable->AddAndCommit(itemSet, itemSet->GetUniqueID());
+                candidates->Add(curTable);
+            } while(!prevBest->IsCurTableNullPtr());
         }
         candidates->SortAndPrune(beamWidth);
         if (begin(complexities), end(complexities), iteration) {
-            //output results
+            //TODO SOMETHING
         }
         iteration++;
     }
