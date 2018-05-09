@@ -8,20 +8,26 @@
 
 #include "../../krimp/codetable/CodeTable.h"
 
-//typedef std::list<CodeTable*> ctList;
 typedef std::vector<CodeTable*> ctVec;
 
 class CTSet {
 public:
     CTSet();
+    // Iterator is reset after modifying the list
     void        Add(CodeTable* codeTable);
+    void        PopBack();
     void        Sort();
     void        SortReverse();
     void        SortAndPrune(uint32 numTablesRemain);
 
-    double AvgCompression();
+    //Stats
+    double      AvgCompression();
     uint32      GetNumTables();
+
+    // Iteration stuff
     CodeTable*  NextCodeTable();
+    bool        IsCurTableNullPtr();
+    void        ResetIterator();
 
 protected:
 

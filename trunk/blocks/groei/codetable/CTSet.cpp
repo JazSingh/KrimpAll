@@ -25,38 +25,48 @@ uint32 CTSet::GetNumTables() {
 
 void CTSet::Add(CodeTable *codeTable) {
     codeTables->push_back(codeTable);
+    ResetIterator();
+}
+
+void CTSet::PopBack() {
+    codeTables->pop_back();
+    ResetIterator();
 }
 
 void CTSet::Sort() {
     std::sort(codeTables->begin(), codeTables->end(), SortingMethod);
+    ResetIterator();
 }
 
 void CTSet::SortReverse() {
     std::sort(codeTables->begin(), codeTables->end(), SortingMethodReverse);
+    ResetIterator();
 }
 
 void CTSet::SortAndPrune(uint32 numTablesRemain) {
     SortReverse();
-    ctVec *codeTablesNew = new ctVec();
+    auto *codeTablesNew = new ctVec();
     for(int i = 0; i < numTablesRemain; i++) {
         codeTablesNew->push_back(codeTables->front());
         codeTables->pop_back();
     }
     delete codeTables;
     codeTables = codeTablesNew;
+    ResetIterator();
 }
 
-/*
+/**
  * Works like an iterator (linked-list like behavior)
- *  if the iterator is a nullptr then the end of the list reached.
- */
+ *  If the iterator is a nullptr, the first element of the set is returned.
+ *  If the iterator is at the end of the set, the next element will be a nullptr.
+ **/
 CodeTable *CTSet::NextCodeTable() {
     if(*curTable == nullptr) {
         curTable = codeTables->begin();
     }
     if(curTable == codeTables->end()) {
         *curTable = nullptr;
-        return *curTable;
+        return *codeTables->end();
     }
     return *curTable++;
 }
@@ -71,4 +81,12 @@ double CTSet::AvgCompression() {
     }
     double avgCompression = sumCompression/numTab;
     return avgCompression;
+}
+
+bool CTSet::IsCurTableNullPtr() {
+    return *curTable == nullptr;
+}
+
+void CTSet::ResetIterator() {
+    *curTable = nullptr;
 }
