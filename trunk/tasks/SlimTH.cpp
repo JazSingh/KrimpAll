@@ -1,3 +1,4 @@
+#define ENABLE_SLIM
 #ifdef ENABLE_SLIM
 
 #if defined (_WINDOWS)

@@ -3,6 +3,7 @@
 //
 
 #include "Groei.h"
+#include "../slim/codetable/CCPUCodeTable.h"
 
 /**
  * Constructors
@@ -19,11 +20,13 @@ void Groei::Playground() {
     uint32 beamWidth = 10;
     uint64 iteration = 0;
     uint64 *maxComplexity = max_element(begin(complexities), end(complexities));
-    CTSet *candidates = new CTSet();
+    auto *candidates = new CTSet();
+    auto ctAlpha = new CCPUCodeTable();
+    ctAlpha->Clone();
     while (iteration < *maxComplexity) {
         CTSet *prevBest = candidates;
         candidates = new CTSet();
-        ItemSetCollection *isc = new ItemSetCollection();
+        auto *isc = new ItemSetCollection();
         uint64 numIsc = isc->GetNumItemSets();
         uint32 numTables = prevBest->GetNumTables();
         for (uint64 curIsc = 0; curIsc < numIsc; curIsc++);
@@ -33,12 +36,9 @@ void Groei::Playground() {
                 CodeTable *codeTable = prevBest->NextCodeTable()->Clone();
                 islist *codeTableItemSets = codeTable->GetItemSetList();
                 uint64 numCTIS = codeTableItemSets->size();
-                for (uint64 curIs = 0; curIs < numCTIS; curIs++) {
-                    CodeTable *candidate = prevBest->NextCodeTable()->Clone();
-                    candidate->Add(itemSet, itemSet->GetUniqueID());
-                    candidates->Add(candidate);
-                }
+
             }
+            //while()
         }
         candidates->SortAndPrune(beamWidth);
         if(begin(complexities), end(complexities), iteration) {
