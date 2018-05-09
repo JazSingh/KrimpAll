@@ -5,6 +5,7 @@
 #ifndef FIC_CTSET_H
 #define FIC_CTSET_H
 
+class CodeTable;
 
 #include "../../krimp/codetable/CodeTable.h"
 

@@ -5,6 +5,11 @@
 #include "Groei.h"
 #include "../slim/codetable/CCPUCodeTable.h"
 #include "../slim/SlimAlgo.h"
+#include <StringUtils.h>
+#include <boost/tokenizer.hpp>
+
+
+using namespace boost;
 
 /**
  * Constructors
@@ -15,29 +20,31 @@ Groei::Groei(CodeTable *ct, HashPolicyType hashPolicy, Config *config)
 }
 
 CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup) {
+    // Read properties from config
+    uint32 beamWidth        = mConfig->Read<uint32>("beamWidth");
+    uint32 numComplexities  = mConfig->Read<uint32>("numComplexities");
+    string sComplexities    = mConfig->Read<string>("complexities", "");
+    uint32 *complexities    = StringUtils::TokenizeUint32(sComplexities, numComplexities);
+    uint32 *maxComplexity   = std::max_element(complexities, complexities+numComplexities);
 
-}
-
-/**
- * Playground for experimenting
- */
-void Groei::Playground() {
-    uint64 complexities[] = {1, 2, 3};
-    uint32 beamWidth = 10;
-    uint64 iteration = 0;
-    uint64 *maxComplexity = max_element(begin(complexities), end(complexities));
-    auto *candidates = new CTSet();
-    auto ctAlpha = mCT->Clone();
+    // Initialize
+    uint32 complexityLvl    = 0;
+    uint32 iteration        = 0;
+    auto *candidates        = new CTSet();
+    auto ctAlpha            = mCT->Clone();
     candidates->Add(ctAlpha);
-    while (iteration < *maxComplexity) {
-        CTSet *prevBest = candidates;
-        candidates = new CTSet();
-        auto *isc = new ItemSetCollection();
-        uint64 numIsc = isc->GetNumItemSets();
+
+    // Start: for all complexity levels from [0..max]:
+    while (iteration <= *maxComplexity) {
+        CTSet *prevBest  = candidates;
+        candidates       = new CTSet();
+        uint64 numIsc    = mISC->GetNumItemSets();
+        // For all item sets in the item set collection:
         for (uint64 curIsc = 0; curIsc < numIsc; curIsc++);
         {
-            ItemSet *itemSet = isc->GetNextItemSet();
+            ItemSet *itemSet = mISC->GetNextItemSet();
 
+            // Add to all clones of all code tables
             prevBest->ResetIterator();
             do {
                 CodeTable *curTable = prevBest->NextCodeTable()->Clone();
@@ -46,9 +53,12 @@ void Groei::Playground() {
             } while(!prevBest->IsCurTableNullPtr());
         }
         candidates->SortAndPrune(beamWidth);
-        if (begin(complexities), end(complexities), iteration) {
-            //TODO SOMETHING
+        if(iteration == *(complexities + complexityLvl)) {
+            //TODO something interesting
+            complexityLvl++;
         }
         iteration++;
     }
+    ctAlpha->SetCodeTableSet(candidates);
+    return ctAlpha;
 }

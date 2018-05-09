@@ -69,10 +69,12 @@
 class Database;
 class ItemSet;
 class ItemSetCollection;
+class CTSet;
 
 #include <Bass.h>
 #include <itemstructs/ItemSet.h>
 #include "../blocks/slim/structs/ItemSetSorted.h"		// Sorted itemsets for SlimMJ
+#include "../../groei/codetable/CTSet.h"
 
 enum CTInitType {
 	InitCTEmpty=0,
@@ -255,6 +257,13 @@ public:
 	virtual uint32*		GetAlphabetUsage(uint32 idx) { return mAlphabetUsages[idx]; }
 	virtual double		GetStdLength(uint32 idx) const { return mStdLengths[idx]; }
 
+	//////////////////////////////////////////////////////////////////////////
+	// Jaspreet Hacks
+	/////////////////////////////////////////////////////////////////////////
+
+	CTSet* 		GetCodeTableSet() { return codetableSet; }
+	void		SetCodeTableSet(CTSet* codeTables) { codetableSet = codeTables; }
+
 protected:
 	Database*			mDB;
 	double				*mStdLengths;
@@ -283,6 +292,8 @@ protected:
 
 	uint32				**mOldAlphabetUsages;
 	uint32				*mValues; // temporary variable to retrieve the alphabet-cover items
+
+	CTSet				*codetableSet;
 };
 
 #endif // __CODETABLE_H

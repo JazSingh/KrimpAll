@@ -16,7 +16,6 @@
 class Groei: public GroeiAlgo {
 public:
     Groei(CodeTable* ct, HashPolicyType hashPolicy, Config* config);
-    virtual void Playground();
 
     virtual CodeTable*	DoeJeDing(const uint64 candidateOffset=0, const uint32 startSup=0);
 
