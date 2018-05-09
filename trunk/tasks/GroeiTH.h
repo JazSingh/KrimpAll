@@ -12,7 +12,7 @@ public:
     virtual void HandleTask();
     virtual string BuildWorkingDir();
 
-    void Compress(Config *conf, const string tag = "");
+    void Compress(Config *config, const string tagIn = "");
     void DoCompress(Config *conf, Database *db, ItemSetCollection *isc, const string &tag, const string &timetag, const uint32 resumeSup, const uint64 resumeCand);
 
 protected:

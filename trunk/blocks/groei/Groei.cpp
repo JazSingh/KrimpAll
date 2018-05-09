@@ -4,12 +4,18 @@
 
 #include "Groei.h"
 #include "../slim/codetable/CCPUCodeTable.h"
+#include "../slim/SlimAlgo.h"
 
 /**
  * Constructors
  */
-Groei::Groei() {
+Groei::Groei(CodeTable *ct, HashPolicyType hashPolicy, Config *config)
+        : GroeiAlgo(ct, hashPolicy, config) {
+    mWriteLogFile = true;
+}
 
+CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup) {
+    return KrimpAlgo::DoeJeDing(candidateOffset, startSup);
 }
 
 /**
@@ -41,7 +47,7 @@ void Groei::Playground() {
             //while()
         }
         candidates->SortAndPrune(beamWidth);
-        if(begin(complexities), end(complexities), iteration) {
+        if (begin(complexities), end(complexities), iteration) {
             //output results
         }
         iteration++;
