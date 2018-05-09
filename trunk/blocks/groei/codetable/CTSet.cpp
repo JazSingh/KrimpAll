@@ -46,13 +46,17 @@ void CTSet::SortAndPrune(uint32 numTablesRemain) {
     codeTables = codeTablesNew;
 }
 
+/*
+ * Works like an iterator (linked-list like behavior)
+ *  if the iterator is a nullptr then the end of the list reached.
+ */
 CodeTable *CTSet::NextCodeTable() {
     if(*curTable == nullptr) {
         curTable = codeTables->begin();
     }
     if(curTable == codeTables->end()) {
-        curTable = codeTables->begin();
-        return nullptr;
+        *curTable = nullptr;
+        return *curTable;
     }
     return *curTable++;
 }
