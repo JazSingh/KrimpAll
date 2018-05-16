@@ -33,10 +33,10 @@ public:
 protected:
 
 private:
-    ctVec   *codeTables;
-    ctVec::iterator curTable;
+    ctVec               *codeTables;
+    ctVec::iterator     curTable;
 
-    uint32  nTables;
+    uint32              nTables;
 };
 
 

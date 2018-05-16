@@ -88,5 +88,5 @@ bool CTSet::IsCurTableNullPtr() {
 }
 
 void CTSet::ResetIterator() {
-    *curTable = nullptr;
+    curTable = codeTables->begin();
 }

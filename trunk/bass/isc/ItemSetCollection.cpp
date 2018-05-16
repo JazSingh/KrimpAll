@@ -693,7 +693,7 @@ void ItemSetCollection::ConvertIscFile(const string &inPath, const string &inIsc
 
 			if(FileUtils::FileExists(outFullPath))
 				FileUtils::RemoveFile(outFullPath);
-			FileUtils::FileMove(outFullPathTmp, outFullPath);
+			rename(outFullPathTmp.data(), outFullPath.data());
 		} catch(...) {
 			delete iscOrig;
 			throw;

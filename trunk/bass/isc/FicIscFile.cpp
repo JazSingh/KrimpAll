@@ -97,7 +97,7 @@ void FicIscFile::ReadFileHeader() {
 		char iscOrderStr[10];
 		char patTypeStr[10];
 		char dbNameStr[100];
-		if(sscanf_s(mBuffer, "mi: numSets=%" I64d " minSup=%d maxLen=%d sepRows=%d iscOrder=%s patType=%s dbName=%s\n", &mNumItemSets, &mMinSup, &mMaxSetLength, &sepNumRows, iscOrderStr, 10, patTypeStr, 10, dbNameStr, 100) < 3)
+		if(sscanf_s(mBuffer, "mi: numSets=%" I64d " minSup=%d maxLen=%d sepRows=%d iscOrder=%s patType=%s dbName=%s\n", &mNumItemSets, &mMinSup, &mMaxSetLength, &sepNumRows, iscOrderStr, patTypeStr, dbNameStr) < 3)
 			THROW("Version 1.3 incorrect header.");
 		mHasSepNumRows = sepNumRows == 1;
 		mIscOrder = ItemSetCollection::StringToIscOrderType(iscOrderStr);

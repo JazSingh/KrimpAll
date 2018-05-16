@@ -51,6 +51,10 @@
 #include "tasks/SlimTH.h"
 #include "../blocks/slim/SlimAlgo.h"
 #endif
+#ifdef ENABLE_GROEI
+#include "tasks/GroeiTH.h"
+#include "../blocks/groei/GroeiAlgo.h"
+#endif
 #ifdef ENABLE_DATAGEN
 #include "tasks/DataGenTH.h"
 #endif
@@ -79,6 +83,7 @@
 #endif
 
 #include "FicMain.h"
+#include "tasks/GroeiTH.h"
 
 const string FicMain::ficVersion = "mkIII beta";
 
@@ -109,6 +114,9 @@ void FicMain::Execute() {
 #endif
 #ifdef ENABLE_SLIM
 	else	if(mTaskClass.compare("compress_ng") == 0)		th = new SlimTH(mConfig);
+#endif
+#ifdef ENABLE_GROEI
+	else	if(mTaskClass.compare("compress_groei") == 0)	th = new GroeiTH(mConfig);
 #endif
 #ifdef ENABLE_DATAGEN
 	else	if(mTaskClass.compare("dgen") == 0)				th = new DataGenTH(mConfig);
@@ -155,7 +163,7 @@ void FicMain::Execute() {
 	Logger::Init(th->ShouldWriteTaskLogs());
 
 	// Some old stuff that needs to be changed
-	Bass::SetOutputLevel(mConfig->Read<uint32>("verbosity", 2));
+	Bass::SetOutputLevel(mConfig->Read<uint32>("verbosity", 3));
 	ECHO(1,printf(" * Verbosity:\t\t%d\n", Bass::GetOutputLevel()));
 	ECHO(1, printf(" * Max Mem Usage:\t%dmb\n",(uint32)(Bass::GetMaxMemUse()/(uint64)MEGABYTE)));
 
@@ -588,7 +596,7 @@ ItemSetCollection* FicMain::MineItemSetCollection(const string &iscTag, Database
 				if(!FileUtils::CreateDir(iscPath))
 					THROW("Error: trouble creating the IscReposDir: " + iscPath + "\n");
 			string iscFilename = iscTag + "." + IscFile::TypeToExt(fileType);
-			FileUtils::FileMove(Bass::GetWorkingDir() + iscFilename, Bass::GetIscReposDir() + iscFilename);
+			rename((Bass::GetWorkingDir() + iscFilename).data(), (Bass::GetIscReposDir() + iscFilename).data());
 		}	
 		isc = ItemSetCollection::OpenItemSetCollection(iscTag, iscPath, db, loadAll, fileType);
 	}

@@ -7,6 +7,7 @@
 #define ENABLE_CLASSIFIER
 #undef ENABLE_CLUSTER
 #define ENABLE_SLIM
+#define ENABLE_GROEI
 #undef ENABLE_DATAGEN
 #undef ENABLE_EMM
 #undef ENABLE_LESS
@@ -33,6 +34,9 @@
 #endif
 #ifdef ENABLE_SLIM
 #define BLOCK_SLIM
+#endif
+#ifdef ENABLE_GROEI
+#define BLOCK_GROEI
 #endif
 #ifdef ENABLE_DATAGEN
 #define BLOCK_DATAGEN

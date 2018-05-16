@@ -136,7 +136,7 @@ void BinaryFicIscFile::ReadFileHeader() {
 			THROW("Incorrect header.");
 		mFileDataType = mDatabase->GetDataType();
 	} else if(mFileFormat == BinFicIscFileVersion1_2) {
-		if(sscanf_s(mBuffer, "mi: numSets=%" I64d " minSup=%d maxLen=%d sepRows=%d iscOrder=%s patType=%s dbName=%s dType=%s\n", &mNumItemSets, &mMinSup, &mMaxSetLength, &sepNumRows, iscOrderStr, 10, patTypeStr, 10, dbNameStr, 100, dataTypeStr, 10) < 3)
+		if(sscanf_s(mBuffer, "mi: numSets=%" I64d " minSup=%d maxLen=%d sepRows=%d iscOrder=%s patType=%s dbName=%s dType=%s\n", &mNumItemSets, &mMinSup, &mMaxSetLength, &sepNumRows, iscOrderStr, patTypeStr, dbNameStr, dataTypeStr) < 3)
 			THROW("Incorrect header.");
 		string dataTypeStrStr = dataTypeStr;
 		mFileDataType = ItemSet::StringToType(dataTypeStrStr);

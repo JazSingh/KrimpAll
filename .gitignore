@@ -190,6 +190,7 @@ modules.xml
 bin/
 data/
 .vcproj
+xps/
 
 # Sensitive or high-churn files:
 

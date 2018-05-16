@@ -258,7 +258,8 @@ bool AfoptCroupier::MyMinePatternsToFile(Database *db, const string &outputFile)
 			FileUtils::RemoveFile( fiTmpFullPath );
 			throw string("AfoptCroupier::MineAllPatternsToFile() -- Target filename already exists, and could not be removed.");
 		}
-		if(!FileUtils::FileMove(fiTmpFullPath, fiFullPath)) {
+		int rn = rename(fiTmpFullPath.data(), fiFullPath.data());
+		if(rn) {
 			FileUtils::RemoveFile( fiTmpFullPath );
 			throw string("AfoptCroupier::MineAllPatternsToFile() -- Error renaming ItemSetCollection file.");
 		}

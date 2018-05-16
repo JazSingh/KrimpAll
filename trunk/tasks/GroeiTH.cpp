@@ -25,6 +25,7 @@
 #include <isc/IscFile.h>
 #include <isc/ItemSetCollection.h>
 #include <itemstructs/CoverSet.h>
+#include <omp.h>
 
 #include "../blocks/groei/GroeiAlgo.h"
 #include "../blocks/krimp/codetable/CodeTable.h"
@@ -69,7 +70,7 @@ void GroeiTH::Compress(Config *config, const string tagIn) {
     string tag, timetag;
     if(tagIn.length() == 0) {
         timetag = TimeUtils::GetTimeStampString();
-        tag = iscName;
+        tag = iscName + "-" + pruneStrategyStr + "-" + timetag;
     } else {
         tag = tagIn;
         timetag = tag.substr(tag.find_last_of('-')+1,tag.length()-1-tag.find_last_of('-'));
@@ -81,27 +82,16 @@ void GroeiTH::Compress(Config *config, const string tagIn) {
     // Get ISC
     string iscFullPath = Bass::GetWorkingDir() + iscName + ".isc";
 
+    double mTotalStartTime = omp_get_wtime();
+
     ItemSetCollection *isc = NULL;
     string iscIfMinedStr = config->Read<string>("iscifmined", "");
-    bool loadAll = config->Read<bool>("loadall", 0);		// ??? sander-add
+    bool loadAll = config->Read<int>("loadall", 0) == 1;		// ??? sander-add
     bool iscBeenMined = false;
-    if (config->Read<string>("algo").compare(0, 4, "slim") == 0) { // We don't really need a itemset collection...
-        stringstream ss;
-        ss << dbName << "-all-" << db->GetNumTransactions()+1 << "d";
-        iscName = ss.str();
-        iscIfMinedStr = "zap"; // Otherwise, we can crash... don't feel the urgent need to fix this properly ;-(
-    }
     try {
-        uint8 ol = Bass::GetOutputLevel();
-        if (config->Read<string>("algo").compare(0, 4, "groei") == 0) { // We don't really need a itemset collection...
-            Bass::SetOutputLevel(0);
-        }
         IscFileType storeIscFileType = config->KeyExists("iscStoreType") ? IscFile::ExtToType(config->Read<string>("iscStoreType")) : BinaryFicIscFileType;
         IscFileType chunkIscFileType = config->KeyExists("iscChunkType") ? IscFile::ExtToType(config->Read<string>("iscChunkType")) : BinaryFicIscFileType;
         isc = FicMain::ProvideItemSetCollection(iscName, db, iscBeenMined, iscIfMinedStr.compare("store") == 0, loadAll, storeIscFileType, chunkIscFileType);
-        if (config->Read<string>("algo").compare(0, 4, "slim") == 0) { // We don't really need a itemset collection...
-            Bass::SetOutputLevel(ol);
-        }
     } catch(string msg) {
         delete db;
         throw msg;
@@ -110,6 +100,13 @@ void GroeiTH::Compress(Config *config, const string tagIn) {
     DoCompress(config, db, isc, tag, timetag, 0, 0);
     delete db;
     delete isc;
+
+    double timeTotal = omp_get_wtime() - mTotalStartTime;
+
+
+    FILE* fp = fopen((Bass::GetWorkingDir() + tag + "/" + "time.log").c_str(), "w");
+    fprintf(fp, " * Total time:\t\tMining & compressing the database took %f seconds.\t\t\n", timeTotal);
+    fclose(fp);
 
     if(iscBeenMined == true && iscIfMinedStr.compare("zap") == 0) {	// if stored, it's already gone from workingdir
         FileUtils::RemoveFile(iscFullPath);

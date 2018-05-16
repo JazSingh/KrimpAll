@@ -10,6 +10,7 @@
 //#define ENABLE_CLASSIFIER
 //#define ENABLE_CLUSTER
 #define ENABLE_SLIM
+#define ENABLE_GROEI
 //#define ENABLE_DATAGEN
 //#define ENABLE_EMM
 //#define ENABLE_LESS
