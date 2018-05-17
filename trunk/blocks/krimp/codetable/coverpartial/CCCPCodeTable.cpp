@@ -25,8 +25,8 @@ template <ItemSetType T>
 CCCPCodeTable<T>::CCCPCodeTable(const CCCPCodeTable &ct) : CodeTable(ct) {
 	mCT.reserve(ct.mCT.size());
 	for (uint32 i=0; i<ct.mCT.size(); i++) {
-		ct.mCT[i]->Ref();
-		mCT.push_back(ct.mCT[i]);
+		//ct.mCT[i]->Ref();
+		mCT.push_back(ct.mCT[i]->Clone());
 	}
 	mCTMasks = ct.mCTMasks;
 	mCTLen = ct.mCTLen;

@@ -63,6 +63,7 @@ string GroeiAlgo::StringToHashPolicyType(string algoname, HashPolicyType &hashPo
     }
     return algoname;}
 
+    //TODO
 void GroeiAlgo::ProgressToScreen(const uint64 curCandidate, CodeTable *ct) {
     if(Bass::GetOutputLevel() > 0) {
         uint64 canDif = curCandidate - mScreenReportCandidateIdx;

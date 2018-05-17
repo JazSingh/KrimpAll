@@ -66,14 +66,14 @@ CodeTable::CodeTable(const CodeTable &ct) {
 	mCurNumSets = ct.mCurNumSets;
 
 	mAlphabetSize = ct.mAlphabetSize;
-	THROW_DROP_SHIZZLE();
-	mAlphabetUsages = NULL;
-	mAlphabetUsageAdd = NULL;
-	mAlphabetUsageZap = NULL;
+	// THROW_DROP_SHIZZLE();
+	mAlphabetUsages = ct.mAlphabetUsages;
+	mAlphabetUsageAdd = ct.mAlphabetUsageAdd;
+	mAlphabetUsageZap = ct.mAlphabetUsageZap;
 
-	mAlphabetNumRows = NULL;
-	mOldAlphabetUsages = NULL;
-	mValues = NULL;
+	mAlphabetNumRows = ct.mAlphabetNumRows;
+	mOldAlphabetUsages = ct.mOldAlphabetUsages;
+	mValues = ct.mValues;
 }
 
 CodeTable::~CodeTable() {

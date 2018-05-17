@@ -104,9 +104,9 @@ void GroeiTH::Compress(Config *config, const string tagIn) {
     double timeTotal = omp_get_wtime() - mTotalStartTime;
 
 
-    FILE* fp = fopen((Bass::GetWorkingDir() + tag + "/" + "time.log").c_str(), "w");
-    fprintf(fp, " * Total time:\t\tMining & compressing the database took %f seconds.\t\t\n", timeTotal);
-    fclose(fp);
+    //FILE* fp = fopen((Bass::GetWorkingDir() + tag + "/" + "time.log").c_str(), "w");
+    //fprintf(fp, " * Total time:\t\tMining & compressing the database took %f seconds.\t\t\n", timeTotal);
+    //fclose(fp);
 
     if(iscBeenMined == true && iscIfMinedStr.compare("zap") == 0) {	// if stored, it's already gone from workingdir
         FileUtils::RemoveFile(iscFullPath);
@@ -205,55 +205,62 @@ void GroeiTH::DoCompress(Config *config, Database *db, ItemSetCollection *isc, c
     }
 
     // Put algo to work
-    CodeTable *ct = algo->DoeJeDing(candOffset, startSup);
+    CodeTable *ctt = algo->DoeJeDing(candOffset, startSup);
 
     ECHO(3, printf("** Finished compression.\n"));
 
     // Write transaction covers to disk
-    if (config->Read<bool>("writeCover", false)) {
-        string filename = algo->GetOutDir() + "/" + tag + ".cover";
-        FILE *fp = fopen(filename.c_str(), "w");
-        CoverSet* cs = CoverSet::Create(db->GetDataType(), db->GetAlphabetSize());
-        for(uint32 r = 0; r < db->GetNumRows(); ++r) {
-            ItemSet* t = db->GetRow(r);
-            uint16* values = new uint16[t->GetLength()];
-            double codeLen = 0.0;
+    if (config->Read<bool>("writeCover", true)) {
+        CTSet* ctSet = ctt->GetCodeTableSet();
+        uint32 numTables = ctSet->GetNumTables();
+        ctSet->ResetIterator();
+        while(!ctSet->IsIteratorEnd()) {
+            CodeTable* ct = ctSet->NextCodeTable();
+            string filename = algo->GetOutDir() + "/" + tag + "-" + to_string(numTables) + ".cover";
+            numTables--;
+            FILE *fp = fopen(filename.c_str(), "w");
+            CoverSet *cs = CoverSet::Create(db->GetDataType(), db->GetAlphabetSize());
+            for (uint32 r = 0; r < db->GetNumRows(); ++r) {
+                ItemSet *t = db->GetRow(r);
+                uint16 *values = new uint16[t->GetLength()];
+                double codeLen = 0.0;
 
-            cs->InitSet(t);
+                cs->InitSet(t);
 
-            // item sets (length > 1)
-            islist* isl = ct->GetItemSetList();
-            for (islist::iterator cit = isl->begin(); cit != isl->end(); ++cit) {
-                if(cs->Cover(*cit)) {
-                    double cl = CalcCodeLength((*cit)->GetUsageCount(), ct->GetCurStats().usgCountSum);
-                    if (fp) fprintf(fp, "(%s : %.2f) ", (*cit)->ToString(false, false).c_str(), cl);
-                    codeLen += cl;
+                // item sets (length > 1)
+                islist *isl = ct->GetItemSetList();
+                for (islist::iterator cit = isl->begin(); cit != isl->end(); ++cit) {
+                    if (cs->Cover(*cit)) {
+                        double cl = CalcCodeLength((*cit)->GetUsageCount(), ct->GetCurStats().usgCountSum);
+                        if (fp) fprintf(fp, "(%s : %.2f) ", (*cit)->ToString(false, false).c_str(), cl);
+                        codeLen += cl;
+                    }
                 }
+                isl->clear();
+                delete isl;
+
+                // alphabet items
+                islist *sl = ct->GetSingletonList();
+                uint16 i = 0;
+                for (islist::iterator cit = sl->begin(); cit != sl->end(); ++cit, ++i)
+                    if (cs->IsItemUncovered(i)) {
+                        double cl = CalcCodeLength((*cit)->GetUsageCount(), ct->GetCurStats().usgCountSum);
+                        if (fp) fprintf(fp, "(%s : %.2f) ", (*cit)->ToString(false, false).c_str(), cl);
+                        codeLen += cl;
+                    }
+                sl->clear();
+                delete sl;
+
+                if (fp) fprintf(fp, ": %.2f\n", codeLen);
+
+                delete values;
             }
-            isl->clear();
-            delete isl;
-
-            // alphabet items
-            islist* sl = ct->GetSingletonList();
-            uint16 i = 0;
-            for (islist::iterator cit = sl->begin(); cit != sl->end(); ++cit, ++i)
-                if(cs->IsItemUncovered(i)) {
-                    double cl = CalcCodeLength((*cit)->GetUsageCount(), ct->GetCurStats().usgCountSum);
-                    if (fp) fprintf(fp, "(%s : %.2f) ", (*cit)->ToString(false, false).c_str(), cl);
-                    codeLen += cl;
-                }
-            sl->clear();
-            delete sl;
-
-            if (fp) fprintf(fp, ": %.2f\n", codeLen);
-
-            delete values;
+            delete cs;
+            fclose(fp);
         }
-        delete cs;
-        fclose(fp);
     }
 
     delete algo;
-    delete ct;
+    delete ctt;
 }
 

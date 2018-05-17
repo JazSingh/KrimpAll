@@ -214,7 +214,7 @@ void SlimTH::DoCompress(Config *config, Database *db, ItemSetCollection *isc, co
 	ECHO(3, printf("** Finished compression.\n"));
 
 	// Write transaction covers to disk
-	if (config->Read<bool>("writeCover", false)) {
+	if (config->Read<bool>("writeCover", true)) {
 		string filename = algo->GetOutDir() + "/" + tag + ".cover";
 		FILE *fp = fopen(filename.c_str(), "w");
 		CoverSet* cs = CoverSet::Create(db->GetDataType(), db->GetAlphabetSize());

@@ -20,6 +20,7 @@ public:
     void        Sort();
     void        SortReverse();
     void        SortAndPrune(uint32 numTablesRemain);
+    void        Cover();
 
     //Stats
     double      AvgCompression();
@@ -27,7 +28,7 @@ public:
 
     // Iteration stuff
     CodeTable*  NextCodeTable();
-    bool        IsCurTableNullPtr();
+    bool        IsIteratorEnd();
     void        ResetIterator();
 
 protected:
