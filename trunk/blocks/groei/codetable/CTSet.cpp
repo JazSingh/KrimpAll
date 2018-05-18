@@ -113,15 +113,6 @@ void CTSet::PrintStats() {
     }
 }
 
-void CTSet::Merge(CTSet* cts) {
-    ctVec* tables = cts->GetCodeTables();
-    ctVec* merged;
-    merged->reserve(codeTables->size() + tables->size());
-    merged->insert(merged->end(), codeTables->begin(), codeTables->end());
-    merged->insert(merged->end(), tables->begin(),     tables->end());
-    codeTables = merged;
-}
-
 ctVec *CTSet::GetCodeTables() {
     return codeTables;
 }
@@ -132,6 +123,9 @@ CoverStats& CTSet::GetBest() {
 }
 
 CoverStats& CTSet::GetWorst() {
+    if(codeTables->size() == 1) {
+        return (*codeTables->begin())->GetCurStats();
+    }
     Sort();
     return (*codeTables->end())->GetCurStats();
 }
@@ -142,6 +136,33 @@ CodeTable *CTSet::GetBestTable() {
 }
 
 CodeTable *CTSet::GetWorstTable() {
+    if(codeTables->size() == 1) {
+        *codeTables->begin();
+    }
     Sort();
     return *codeTables->end();
+}
+
+void CTSet::AddLim(CodeTable *codeTable) { //TODO: Strict or no?
+    if(codeTable->GetCurStats().encSize <= encSizePrevWorst) {
+        if (codeTable->GetCurStats().encSize < encSizeThreshold && codeTables->size() < maxTables) {
+            Add(codeTable);
+        } else if (codeTable->GetCurStats().encSize < encSizeThreshold) {
+            Sort();
+            CodeTable *worstTable = GetWorstTable();
+            if (codeTable->GetCurStats().encSize < worstTable->GetCurStats().encSize) {
+                PopBack();
+                Add(codeTable);
+            }
+        }
+    }
+}
+
+CTSet::CTSet(uint64 maxTables) : CTSet() {
+    this->maxTables = maxTables;
+}
+
+CTSet::CTSet(uint64 maxTables, double encSizeThreshold, double encSizePrevWorst) : CTSet(maxTables) {
+    this->encSizeThreshold = encSizeThreshold;
+    this->encSizePrevWorst = encSizePrevWorst;
 }

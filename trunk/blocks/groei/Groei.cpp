@@ -86,24 +86,21 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
         CTSet *prevBest = candidates;
         CoverStats prevBestStats = prevBest->GetBest();
         CoverStats prevWorstStats;
-        if(candidates->GetNumTables() == 1) {
-            prevWorstStats = prevBestStats;
-        } else  {
-            prevWorstStats = prevBest->GetWorst();
-        }
+        prevWorstStats = prevBest->GetWorst();
+
         candidates = new CTSet();
 
         // For all item sets in the item set collection:
         for (uint64 i = 0; i < numIsc; i++) {
             ItemSet *itemSet = ctlist[i]->Clone();
-            if(mNeedsOccs) {
+            if (mNeedsOccs) {
                 mDB->DetermineOccurrences(itemSet);
             }
             itemSet->SetID(i);
             uint32 sup = itemSet->GetSupport();
 
             // ignore singletons and item sets under minimum support
-            if(itemSet->GetLength() <= 1 || sup < mMinSup) {
+            if (itemSet->GetLength() <= 1 || sup < mMinSup) {
                 delete itemSet;
                 continue;
             }
@@ -112,35 +109,57 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
             prevBest->ResetIterator();
             while (!prevBest->IsIteratorEnd()) {
                 CodeTable *curTable = prevBest->NextCodeTable();
-                candidates->Add(curTable->Clone());
+                uint64 nTab = candidates->GetNumTables();
+                if(candidates->GetNumTables() == 0 && curTable->GetCurStats().encSize < prevWorstStats.encSize) {
+                    candidates->Add(curTable->Clone());
+                } else if (curTable->GetCurStats().encSize < candidates->GetWorst().encSize) {
+                    if(nTab < beamWidth) {
+                        candidates->Add(curTable->Clone());
+                    } else
+                }
                 if (!candidates->ContainsItemSet(curTable, itemSet)) {
                     curTable = curTable->Clone();
                     curTable->Add(itemSet, itemSet->GetID());
                     itemSet->SetUsageCount(0);
                     curTable->CoverDB(curTable->GetCurStats());
                     curTable->CommitAdd(mWriteCTLogFile);
-                    if (curTable->GetCurStats().encSize < prevWorstStats.encSize) {
-                        candidates->Add(curTable); // Only add those that improve compression.
+                    if (curTable->GetCurStats().encSize <= prevWorstStats.encSize) {
+                        nTab = candidates->GetNumTables();
+                        if (nTab < beamWidth) {
+                            candidates->Add(curTable); // Only add those that improve compression.
+                        } else {
+                            candidates->Sort();
+                            CoverStats worst = candidates->GetWorst();
+                            if (curTable->GetCurStats().encSize < worst.encSize) {
+                                candidates->PopBack(); // Sorted, worst is at the back
+                                candidates->Add(curTable);
+                            }
+                        }
                     }
                 }
             }
-        }
-        candidates->SortAndPrune(beamWidth);
+            if(candidates->GetNumTables() == 0) {
+                candidates = prevBest;
+                printf("BREAK");
+                break;
+            }
+            candidates->SortAndPrune(beamWidth);
 
-        if(candidates->AvgCompression() < 0) {
-            THROW("L(D|M) < 0. That's not good.");
-        }
+            if (candidates->AvgCompression() < 0) {
+                THROW("L(D|M) < 0. That's not good.");
+            }
 
-        if (iteration == *(complexities + complexityLvl)) {
-            //TODO something interesting
-            complexityLvl++;
-        }
+            if (iteration == *(complexities + complexityLvl)) {
+                //TODO something interesting
+                complexityLvl++;
+            }
 
-        mCT = candidates->GetBestTable();
-        if(mWriteProgressToDisk == true) {
-            ProgressToDisk(mCT, 0, 0, numIsc, true, true);
+            mCT = candidates->GetBestTable();
+            if (mWriteProgressToDisk == true) {
+                ProgressToDisk(mCT, 0, 0, numIsc, true, true);
+            }
+            iteration++;
         }
-        iteration++;
     }
 
     mCT->SetCodeTableSet(candidates);

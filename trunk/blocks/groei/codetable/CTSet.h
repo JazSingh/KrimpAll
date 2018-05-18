@@ -15,8 +15,11 @@ typedef std::vector<CodeTable*> ctVec;
 class CTSet {
 public:
     CTSet();
+    CTSet(uint64 maxTables);
+    CTSet(uint64 maxTables, double encSizeThreshold, double encSizePrevWorst);
     // Iterator is reset after modifying the list
     void       Add(CodeTable* codeTable);
+    void       AddLim(CodeTable *codeTable);
     void       PopBack();
     void       Sort();
     void       SortReverse();
@@ -25,9 +28,6 @@ public:
     void       Cover();
 
     bool       ContainsItemSet(CodeTable* ct, ItemSet* is);
-
-    void        Merge(CTSet* cts);
-
 
     //Stats
     double     AvgCompression();
@@ -49,10 +49,14 @@ public:
 protected:
 
 private:
-    ctVec*     GetCodeTables();
+    ctVec*              GetCodeTables();
 
     ctVec               *codeTables;
     ctVec::iterator     curTable;
+
+    uint64              maxTables;
+    double              encSizeThreshold;
+    double              encSizePrevWorst;
 };
 
 
