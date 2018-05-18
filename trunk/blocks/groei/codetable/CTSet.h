@@ -5,6 +5,7 @@
 #ifndef FIC_CTSET_H
 #define FIC_CTSET_H
 
+struct CoverStats;
 class CodeTable;
 
 #include "../../krimp/codetable/CodeTable.h"
@@ -15,29 +16,43 @@ class CTSet {
 public:
     CTSet();
     // Iterator is reset after modifying the list
-    void        Add(CodeTable* codeTable);
-    void        PopBack();
-    void        Sort();
-    void        SortReverse();
-    void        SortAndPrune(uint32 numTablesRemain);
-    void        Cover();
+    void       Add(CodeTable* codeTable);
+    void       PopBack();
+    void       Sort();
+    void       SortReverse();
+    void       SortAndPrune(uint32 numTablesRemain);
+
+    void       Cover();
+
+    bool       ContainsItemSet(CodeTable* ct, ItemSet* is);
+
+    void        Merge(CTSet* cts);
+
 
     //Stats
-    double      AvgCompression();
-    uint32      GetNumTables();
+    double     AvgCompression();
+    uint64     GetNumTables();
+    void       PrintStats();
+
+    CoverStats&  GetBest();
+    CoverStats&  GetWorst();
+
+    CodeTable*  GetBestTable();
+    CodeTable*  GetWorstTable();
 
     // Iteration stuff
-    CodeTable*  NextCodeTable();
-    bool        IsIteratorEnd();
-    void        ResetIterator();
+    CodeTable* NextCodeTable();
+    bool       IsIteratorEnd();
+    void       ResetIterator();
+
 
 protected:
 
 private:
+    ctVec*     GetCodeTables();
+
     ctVec               *codeTables;
     ctVec::iterator     curTable;
-
-    uint32              nTables;
 };
 
 

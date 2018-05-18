@@ -5,7 +5,6 @@
 #include "Groei.h"
 #include <db/Database.h>
 #include "../slim/codetable/CCPUCodeTable.h"
-#include "../slim/SlimAlgo.h"
 #include <StringUtils.h>
 #include <boost/tokenizer.hpp>
 #include <omp.h>
@@ -22,9 +21,9 @@ Groei::Groei(CodeTable *ct, HashPolicyType hashPolicy, Config *config)
 
 CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup) {
     // Read properties from config
-    uint32 beamWidth = 5; //mConfig->Read<uint32>("beamWidth");
+    uint32 beamWidth = 1; //mConfig->Read<uint32>("beamWidth");
     uint32 numComplexities = 1; //mConfig->Read<uint32>("numComplexities");
-    string sComplexities = "20"; //mConfig->Read<string>("complexities", "");
+    string sComplexities = "46"; //mConfig->Read<string>("complexities", "");
     uint32 *complexities = StringUtils::TokenizeUint32(sComplexities, numComplexities);
     uint32 *maxComplexity = std::max_element(complexities, complexities + numComplexities);
 
@@ -72,26 +71,30 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
     uint64 numIsc = mISC->GetNumItemSets();
     mISC->LoadItemSets(numIsc);
     ItemSet **ctlist = mISC->GetLoadedItemSets();
-    vector<bool> tabooList(numIsc);
 
     //TODO
     CoverStats stats = mCT->GetCurStats();
     stats.numCandidates = mNumCandidates;
-    printf(" * Start:\t\t(%da,%du,%" I64d ",%.0lf,%.0lf,%.0lf)\n",stats.alphItemsUsed, stats.numSetsUsed, stats.usgCountSum,stats.encDbSize,stats.encCTSize,stats.encSize);
+    printf(" * Start:\t\t(stdTable, %da,%du,%" I64d ",%.0lf,%.0lf,%.0lf)\n",stats.alphItemsUsed, stats.numSetsUsed, stats.usgCountSum,stats.encDbSize,stats.encCTSize,stats.encSize);
 
-    CoverStats &curStats = mCT->GetCurStats();
+    if(mWriteProgressToDisk == true) {
+        ProgressToDisk(mCT, 0, 0, numIsc, true, true);
+    }
 
     // Start: for all complexity levels from [0..max]:
     while (iteration <= *maxComplexity) {
         CTSet *prevBest = candidates;
-        //delete candidates;
+        CoverStats prevBestStats = prevBest->GetBest();
+        CoverStats prevWorstStats;
+        if(candidates->GetNumTables() == 1) {
+            prevWorstStats = prevBestStats;
+        } else  {
+            prevWorstStats = prevBest->GetWorst();
+        }
         candidates = new CTSet();
 
         // For all item sets in the item set collection:
         for (uint64 i = 0; i < numIsc; i++) {
-            if(tabooList[i]) {
-                continue;
-            }
             ItemSet *itemSet = ctlist[i]->Clone();
             if(mNeedsOccs) {
                 mDB->DetermineOccurrences(itemSet);
@@ -99,47 +102,54 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
             itemSet->SetID(i);
             uint32 sup = itemSet->GetSupport();
 
+            // ignore singletons and item sets under minimum support
             if(itemSet->GetLength() <= 1 || sup < mMinSup) {
-                tabooList[i] = true;
+                delete itemSet;
                 continue;
             }
 
             // Add to all clones of all code tables
             prevBest->ResetIterator();
             while (!prevBest->IsIteratorEnd()) {
-                CodeTable *curTable = prevBest->NextCodeTable()->Clone();
-
-                curTable->Add(itemSet, itemSet->GetID());
-                itemSet->SetUsageCount(0);
-                curTable->CoverDB(curTable->GetCurStats());
-                candidates->Add(curTable);
+                CodeTable *curTable = prevBest->NextCodeTable();
+                candidates->Add(curTable->Clone());
+                if (!candidates->ContainsItemSet(curTable, itemSet)) {
+                    curTable = curTable->Clone();
+                    curTable->Add(itemSet, itemSet->GetID());
+                    itemSet->SetUsageCount(0);
+                    curTable->CoverDB(curTable->GetCurStats());
+                    curTable->CommitAdd(mWriteCTLogFile);
+                    if (curTable->GetCurStats().encSize < prevWorstStats.encSize) {
+                        candidates->Add(curTable); // Only add those that improve compression.
+                    }
+                }
             }
-            tabooList[i] = true;
         }
         candidates->SortAndPrune(beamWidth);
+
         if(candidates->AvgCompression() < 0) {
             THROW("L(D|M) < 0. That's not good.");
         }
+
         if (iteration == *(complexities + complexityLvl)) {
             //TODO something interesting
             complexityLvl++;
         }
+
+        mCT = candidates->GetBestTable();
+        if(mWriteProgressToDisk == true) {
+            ProgressToDisk(mCT, 0, 0, numIsc, true, true);
+        }
         iteration++;
     }
-    ctAlpha->SetCodeTableSet(candidates);
+
+    mCT->SetCodeTableSet(candidates);
 
     double timeCompression = omp_get_wtime() - mCompressionStartTime;
     printf(" * Time:    \t\tCompressing the database took %f seconds.\t\t\n", timeCompression);
-    //printf(" * Cache Hits:\t\t%lu (%.2f%%)  \n", mNumCacheHits, ((100.0 * (double)mNumCacheHits)/((double)mNumCacheHits + (double)mNumGainCalculations)));
 
-    stats = mCT->GetCurStats();
-    printf(" * Result:\t\t(%da,%du,%" I64d ",%.0lf,%.0lf,%.0lf)\n",stats.alphItemsUsed, stats.numSetsUsed, stats.usgCountSum,candidates->AvgCompression(),stats.encCTSize,stats.encSize);
+    candidates->PrintStats();
 
-    //printf(" * Amount of Fun:\t%d / %d OMGLOL\t%d / %d ROFLCOPTER\n", mLOLCounter, mOMGCounter, mCopterCounter, mROFLCounter);
-
-    if(mWriteProgressToDisk == true) {
-        ProgressToDisk(mCT, 0, 0, numIsc, true, true);
-    }
     CloseCTLogFile();
     CloseReportFile();
     CloseLogFile();
@@ -147,5 +157,5 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
     mCT->EndOfKrimp();
 
 
-    return ctAlpha;
+    return mCT;
 }
