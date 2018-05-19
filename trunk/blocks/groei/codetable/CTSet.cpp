@@ -2,8 +2,8 @@
 // Created by Jaspreet Singh on 19/04/2018.
 //
 
-#include "CTSet.h"
 #include "../../krimp/codetable/CodeTable.h"
+#include "CTSet.h"
 
 using namespace std;
 
@@ -45,7 +45,7 @@ void CTSet::SortReverse() {
 
 void CTSet::SortAndPrune(uint32 numTablesRemain) {
     Sort();
-    if(codeTables->size() <= numTablesRemain) {
+    if (codeTables->size() <= numTablesRemain) {
         return;
     } // Is this even possible?
     codeTables->resize(numTablesRemain);
@@ -62,15 +62,15 @@ double CTSet::AvgCompression() {
     double sumCompression = 0;
     ctVec::iterator iter;
     uint64 it = 0;
-    for(iter = codeTables->begin(); iter != codeTables->end(); ++iter) {
-        CodeTable* curTab = *iter;
+    for (iter = codeTables->begin(); iter != codeTables->end(); ++iter) {
+        CodeTable *curTab = *iter;
         sumCompression += curTab->GetCurStats().encSize;
         it++;
     }
-    if(isnan(sumCompression)) {
+    if (isnan(sumCompression)) {
         return -1; // WILL THROW ERROR
     }
-    double avgCompression = sumCompression/numTab;
+    double avgCompression = sumCompression / numTab;
     return avgCompression;
 }
 
@@ -82,20 +82,12 @@ void CTSet::ResetIterator() {
     curTable = codeTables->begin();
 }
 
-void CTSet::Cover() {
-    ctVec::iterator it;
-    for(it = codeTables->begin(); it != codeTables->end(); it++) {
-        CodeTable* ct = *it;
-        ct->CoverDB(ct->GetCurStats());
-    }
-}
-
 bool CTSet::ContainsItemSet(CodeTable *ct, ItemSet *is) {
-    islist* iss = ct->GetItemSetList();
+    islist *iss = ct->GetItemSetList();
     islist::iterator i;
-    for(i = iss->begin(); i != iss->end(); ++i) {
-        ItemSet* itemSet = *i;
-        if(itemSet->Equals(is)) {
+    for (i = iss->begin(); i != iss->end(); ++i) {
+        ItemSet *itemSet = *i;
+        if (itemSet->Equals(is)) {
             return true;
         }
     }
@@ -105,11 +97,12 @@ bool CTSet::ContainsItemSet(CodeTable *ct, ItemSet *is) {
 void CTSet::PrintStats() {
     ctVec::iterator i;
     int count = 0;
-    for(i = codeTables->begin(); i != codeTables->end(); ++i) {
+    for (i = codeTables->begin(); i != codeTables->end(); ++i) {
         count++;
-        CodeTable* ct = *i;
+        CodeTable *ct = *i;
         CoverStats stats = ct->GetCurStats();
-        printf(" * Result:\t\t(ct%d, %da,%du,%" I64d ",%.0lf,%.0lf,%.0lf)\n", count, stats.alphItemsUsed, stats.numSetsUsed, stats.usgCountSum, stats.encDbSize, stats.encCTSize, stats.encSize);
+        printf(" * Result:\t\t(ct%d, %da,%du,%" I64d ",%.0lf,%.0lf,%.0lf)\n", count, stats.alphItemsUsed,
+               stats.numSetsUsed, stats.usgCountSum, stats.encDbSize, stats.encCTSize, stats.encSize);
     }
 }
 
@@ -117,17 +110,17 @@ ctVec *CTSet::GetCodeTables() {
     return codeTables;
 }
 
-CoverStats& CTSet::GetBest() {
+CoverStats &CTSet::GetBestStats() {
     Sort();
     return (*codeTables->begin())->GetCurStats();
 }
 
-CoverStats& CTSet::GetWorst() {
-    if(codeTables->size() == 1) {
+CoverStats &CTSet::GetWorstStats() {
+    if (codeTables->size() == 1) {
         return (*codeTables->begin())->GetCurStats();
     }
     Sort();
-    return (*codeTables->end())->GetCurStats();
+    return (*codeTables->begin())->GetCurStats();
 }
 
 CodeTable *CTSet::GetBestTable() {
@@ -136,25 +129,34 @@ CodeTable *CTSet::GetBestTable() {
 }
 
 CodeTable *CTSet::GetWorstTable() {
-    if(codeTables->size() == 1) {
-        *codeTables->begin();
+    if (codeTables->size() == 1) {
+        return *codeTables->begin();
     }
     Sort();
     return *codeTables->end();
 }
 
-void CTSet::AddLim(CodeTable *codeTable) { //TODO: Strict or no?
-    if(codeTable->GetCurStats().encSize <= encSizePrevWorst) {
-        if (codeTable->GetCurStats().encSize < encSizeThreshold && codeTables->size() < maxTables) {
-            Add(codeTable);
-        } else if (codeTable->GetCurStats().encSize < encSizeThreshold) {
-            Sort();
-            CodeTable *worstTable = GetWorstTable();
-            if (codeTable->GetCurStats().encSize < worstTable->GetCurStats().encSize) {
-                PopBack();
-                Add(codeTable);
-            }
-        }
+void CTSet::AddLim(CodeTable *codeTable, CoverStats &prevBestStats) {
+    double ctEncSize = codeTable->GetCurStats().encSize;
+    if(ctEncSize >= prevBestStats.encSize) {
+        delete codeTable;
+        return;
+    }
+
+    auto encSizeThreshold = DOUBLE_MAX_VALUE;
+    if (!codeTables->empty()) {
+        auto wStats = GetWorstStats();
+        encSizeThreshold = wStats.encSize;
+    }
+
+    if (codeTables->size() < maxTables) {
+        Add(codeTable);
+    } else if (ctEncSize < encSizeThreshold) {
+        Sort();
+        PopBack();
+        Add(codeTable);
+    } else {
+        delete codeTable;
     }
 }
 
@@ -162,7 +164,11 @@ CTSet::CTSet(uint64 maxTables) : CTSet() {
     this->maxTables = maxTables;
 }
 
-CTSet::CTSet(uint64 maxTables, double encSizeThreshold, double encSizePrevWorst) : CTSet(maxTables) {
-    this->encSizeThreshold = encSizeThreshold;
-    this->encSizePrevWorst = encSizePrevWorst;
+CTSet::~CTSet() {
+    //delete &maxTables;
+    for (auto &codeTable : *codeTables) {
+        delete codeTable;
+    }
+    codeTables->clear();
+    delete codeTables;
 }

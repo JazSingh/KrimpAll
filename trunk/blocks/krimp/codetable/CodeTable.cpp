@@ -55,10 +55,10 @@ CodeTable::CodeTable() {
 
 CodeTable::CodeTable(const CodeTable &ct) {
 	mDB = ct.mDB;
-	mStdLengths = ct.mStdLengths;
+	mStdLengths = ct.mStdLengths; //TODO
 	mLaplace = ct.mLaplace;
 	mSTSpecialCode = ct.mSTSpecialCode;
-	mCTLogFile = ct.mCTLogFile;
+	mCTLogFile = ct.mCTLogFile; //TODO
 	mCoverSetType = ct.mCoverSetType;
 	mCurStats = ct.mCurStats;
 	mPrevStats = ct.mPrevStats;
@@ -67,13 +67,58 @@ CodeTable::CodeTable(const CodeTable &ct) {
 
 	mAlphabetSize = ct.mAlphabetSize;
 	// THROW_DROP_SHIZZLE();
-	mAlphabetUsages = ct.mAlphabetUsages;
-	mAlphabetUsageAdd = ct.mAlphabetUsageAdd;
-	mAlphabetUsageZap = ct.mAlphabetUsageZap;
+	mAlphabetNumRows = mDB->GetAlphabetNumRows();
 
-	mAlphabetNumRows = ct.mAlphabetNumRows;
-	mOldAlphabetUsages = ct.mOldAlphabetUsages;
-	mValues = ct.mValues;
+	if (ct.mAlphabetUsages != nullptr) {
+		mAlphabetUsages = new uint32 *[mAlphabetSize];
+		for (uint32 i = 0; i < mAlphabetSize; ++i) {
+			mAlphabetUsages[i] = new uint32[mAlphabetNumRows[i]];
+			memcpy(mAlphabetUsages[i], ct.mAlphabetUsages[i], mAlphabetNumRows[i] * sizeof(uint32));
+		}
+	} else {
+		mAlphabetUsages = nullptr;
+	}
+	if (ct.mOldAlphabetUsages != nullptr) {
+		mOldAlphabetUsages = new uint32 *[mAlphabetSize];
+		for (uint32 i = 0; i < mAlphabetSize; ++i) {
+			mOldAlphabetUsages[i] = new uint32[mAlphabetNumRows[i]];
+			memcpy(mOldAlphabetUsages[i], ct.mOldAlphabetUsages[i], sizeof(uint32) * mAlphabetSize);
+		}
+	}  else  {
+		mOldAlphabetUsages = nullptr;
+	}
+	if (ct.mAlphabetUsageAdd != nullptr) {
+		mAlphabetUsageAdd = new vector<uint32> *[mAlphabetSize];
+		for (uint32 i = 0; i < mAlphabetSize; ++i) {
+			mAlphabetUsageAdd[i] = ct.mAlphabetUsageAdd[i];
+		}
+	} else {
+		mAlphabetUsageAdd = nullptr;
+	}
+	if (ct.mAlphabetUsageZap != nullptr) {
+		mAlphabetUsageZap = new vector<uint32> *[mAlphabetSize];
+		for (uint32 i = 0; i < mAlphabetSize; ++i) {
+			mAlphabetUsageZap[i] = ct.mAlphabetUsageZap[i];
+		}
+	} else  {
+		mAlphabetUsageZap = nullptr;
+	}
+	if (ct.mValues != nullptr) {
+		mValues = new uint32[mAlphabetSize];
+		memcpy(mValues, ct.mValues, sizeof(uint32) * mAlphabetSize);
+	} else {
+		mValues = nullptr;
+	}
+
+//	for (uint32 i = 0; i < mAlphabetSize; ++i) {
+//		mAlphabetUsageAdd[i] = ct.mAlphabetUsageAdd[i];
+//		mAlphabetUsageZap[i] = ct.mAlphabetUsageZap[i];
+//
+//		mOldAlphabetUsages[i] = new uint32[mAlphabetNumRows[i]];
+//		memcpy(mOldAlphabetUsages[i], ct.mOldAlphabetUsages[i], sizeof(uint32) * mAlphabetSize);
+//	}
+
+
 }
 
 CodeTable::~CodeTable() {

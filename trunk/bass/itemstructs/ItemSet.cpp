@@ -90,13 +90,13 @@ ItemSet::ItemSet(const ItemSet& is, bool copyUsages) {
 		mUsage = NULL;
 	} else {
 		mUsage = new uint32[mNumDBOccurs];
-		//memcpy(mUsage, is.mUsage, mNumUsages * sizeof(uint32));
+		memcpy(mUsage, is.mUsage, mNumUsages * sizeof(uint32));
 	}
 	if(is.mPrevUsage == NULL) {
 		mPrevUsage = NULL;
 	} else {
 		mPrevUsage = new uint32[mNumDBOccurs];
-		//memcpy(mPrevUsage, is.mPrevUsage, mNumPrevUsages * sizeof(uint32));
+		memcpy(mPrevUsage, is.mPrevUsage, mNumPrevUsages * sizeof(uint32));
 	}
 	mRefCount = 1;
 }

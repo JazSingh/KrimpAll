@@ -22,26 +22,26 @@ CCCPCodeTable<T>::CCCPCodeTable() : CodeTable() {
 }
 
 template <ItemSetType T>
-CCCPCodeTable<T>::CCCPCodeTable(const CCCPCodeTable &ct) : CodeTable(ct) {
+CCCPCodeTable<T>::CCCPCodeTable(const CCCPCodeTable &ct) : CodeTable(ct) { //TODO
 	mCT.reserve(ct.mCT.size());
 	for (uint32 i=0; i<ct.mCT.size(); i++) {
 		//ct.mCT[i]->Ref(); // need value
 		mCT.push_back(ct.mCT[i]->Clone());
 	}
-	mCTMasks = ct.mCTMasks;
+	mCTMasks = ct.mCTMasks; //TODO
 	mCTLen = ct.mCTLen;
-	mCTIdx = ct.mCTIdx;
-	mUsgCounts = ct.mUsgCounts;
-	mBackupUsgCounts = ct.mBackupUsgCounts;
-	mUsgCountForItemset = ct.mUsgCountForItemset;
+	mCTIdx = ct.mCTIdx; //TODO
+	mUsgCounts = ct.mUsgCounts; //TODO
+	mBackupUsgCounts = ct.mBackupUsgCounts; //TODO
+	mUsgCountForItemset = ct.mUsgCountForItemset; //TODO
 
-	mCDB = ct.mCDB;
+	mCDB = ct.mCDB; //TODO
 
-	mAbDbOccs = ct.mAbDbOccs;
+	mAbDbOccs = ct.mAbDbOccs; //TODO
 
-	mNumDBRows = ct.mNumDBRows;
+	mNumDBRows = ct.mNumDBRows; //TODO
 
-	mUseOccs = ct.mUseOccs;
+	mUseOccs = ct.mUseOccs; //TODO
 
 	mAlphabet = ct.mAlphabet;
 	mOldAlphabet = ct.mOldAlphabet;
@@ -60,7 +60,7 @@ CCCPCodeTable<T>::CCCPCodeTable(const CCCPCodeTable &ct) : CodeTable(ct) {
 template <ItemSetType T>
 CCCPCodeTable<T>::~CCCPCodeTable() {
 	for (uint32 i=0; i<mCT.size(); i++) {
-		mCT[i]->UnRef();
+		delete mCT[i];
 	}
 	delete[] mChangeItemMask;
 	delete[] mMask;

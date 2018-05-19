@@ -5,58 +5,69 @@
 #ifndef FIC_CTSET_H
 #define FIC_CTSET_H
 
-struct CoverStats;
 class CodeTable;
+
+struct CoverStats;
 
 #include "../../krimp/codetable/CodeTable.h"
 
-typedef std::vector<CodeTable*> ctVec;
+typedef std::vector<CodeTable *> ctVec;
 
 class CTSet {
 public:
     CTSet();
+
     CTSet(uint64 maxTables);
-    CTSet(uint64 maxTables, double encSizeThreshold, double encSizePrevWorst);
+
+    ~CTSet();
+
     // Iterator is reset after modifying the list
-    void       Add(CodeTable* codeTable);
-    void       AddLim(CodeTable *codeTable);
-    void       PopBack();
-    void       Sort();
-    void       SortReverse();
-    void       SortAndPrune(uint32 numTablesRemain);
+    void Add(CodeTable *codeTable);
 
-    void       Cover();
+    void AddLim(CodeTable *codeTable, CoverStats &prevBestStats);
 
-    bool       ContainsItemSet(CodeTable* ct, ItemSet* is);
+    void PopBack();
+
+    void Sort();
+
+    void SortReverse();
+
+    void SortAndPrune(uint32 numTablesRemain);
+
+    bool ContainsItemSet(CodeTable *ct, ItemSet *is);
 
     //Stats
-    double     AvgCompression();
-    uint64     GetNumTables();
-    void       PrintStats();
+    double AvgCompression();
 
-    CoverStats&  GetBest();
-    CoverStats&  GetWorst();
+    uint64 GetNumTables();
 
-    CodeTable*  GetBestTable();
-    CodeTable*  GetWorstTable();
+    void PrintStats();
+
+    CoverStats &GetBestStats();
+
+    CoverStats &GetWorstStats();
+
+    CodeTable *GetBestTable();
+
+    CodeTable *GetWorstTable();
 
     // Iteration stuff
-    CodeTable* NextCodeTable();
-    bool       IsIteratorEnd();
-    void       ResetIterator();
+    CodeTable *NextCodeTable();
+
+    bool IsIteratorEnd();
+
+    void ResetIterator();
 
 
 protected:
 
 private:
-    ctVec*              GetCodeTables();
+    ctVec *GetCodeTables();
 
-    ctVec               *codeTables;
-    ctVec::iterator     curTable;
+    ctVec *codeTables;
+    ctVec::iterator curTable;
 
-    uint64              maxTables;
-    double              encSizeThreshold;
-    double              encSizePrevWorst;
+    uint64 maxTables;
 };
 
 
