@@ -25,7 +25,6 @@ template <ItemSetType T>
 CCCPCodeTable<T>::CCCPCodeTable(const CCCPCodeTable &ct) : CodeTable(ct) { //TODO
 	mCT.reserve(ct.mCT.size());
 	for (uint32 i=0; i<ct.mCT.size(); i++) {
-		//ct.mCT[i]->Ref(); // need value
 		mCT.push_back(ct.mCT[i]->Clone());
 	}
 	mCTMasks = ct.mCTMasks; //TODO
@@ -60,6 +59,7 @@ CCCPCodeTable<T>::CCCPCodeTable(const CCCPCodeTable &ct) : CodeTable(ct) { //TOD
 template <ItemSetType T>
 CCCPCodeTable<T>::~CCCPCodeTable() {
 	for (uint32 i=0; i<mCT.size(); i++) {
+		//mCT[i]->UnRef();
 		delete mCT[i];
 	}
 	delete[] mChangeItemMask;

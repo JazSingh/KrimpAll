@@ -24,6 +24,9 @@ uint64 CTSet::GetNumTables() {
 }
 
 void CTSet::Add(CodeTable *codeTable) {
+    if(codeTables->size() > 0 && ContainsCodeTable(codeTable)) {
+        return;
+    }
     codeTables->push_back(codeTable);
     ResetIterator();
 }
@@ -48,13 +51,20 @@ void CTSet::SortAndPrune(uint32 numTablesRemain) {
     if (codeTables->size() <= numTablesRemain) {
         return;
     } // Is this even possible?
+    auto i = codeTables->begin();
+    for(uint64 j = numTablesRemain; j < codeTables->size(); j++) {
+        CodeTable *toDel = *(i + j);
+        delete toDel;
+    }
     codeTables->resize(numTablesRemain);
     codeTables->shrink_to_fit();
     ResetIterator();
 }
 
 CodeTable *CTSet::NextCodeTable() {
-    return *curTable++;
+    CodeTable *ct = *curTable;
+    curTable++;
+    return ct;
 }
 
 double CTSet::AvgCompression() {
@@ -165,10 +175,37 @@ CTSet::CTSet(uint64 maxTables) : CTSet() {
 }
 
 CTSet::~CTSet() {
-    //delete &maxTables;
     for (auto &codeTable : *codeTables) {
         delete codeTable;
     }
     codeTables->clear();
     delete codeTables;
+}
+
+bool CTSet::ContainsCodeTable(CodeTable *ct) {
+    islist *ctList = ct->GetItemSetList();
+    for (auto c : *codeTables) {
+        islist *cList = c->GetItemSetList();
+
+        if(cList->size() != ctList->size()) {
+            continue;
+        }
+
+        auto iC = cList->begin();
+        bool allSame = true;
+        for(auto a: *ctList) {
+            ItemSet *b = *(iC);
+            iC++;
+            if(!a->Equals(b)) {
+                allSame = false;
+                break;
+            }
+        }
+
+        if(allSame) {
+            return true;
+        }
+
+    }
+    return false;
 }

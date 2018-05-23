@@ -34,6 +34,8 @@ public:
 
     void SortAndPrune(uint32 numTablesRemain);
 
+    bool ContainsCodeTable(CodeTable *ct);
+
     bool ContainsItemSet(CodeTable *ct, ItemSet *is);
 
     //Stats

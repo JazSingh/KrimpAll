@@ -23,7 +23,7 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
     // Read properties from config
     uint32 beamWidth = 10; //mConfig->Read<uint32>("beamWidth");
     uint32 numComplexities = 1; //mConfig->Read<uint32>("numComplexities");
-    string sComplexities = "46"; //mConfig->Read<string>("complexities", "");
+    string sComplexities = "60"; //mConfig->Read<string>("complexities", "");
     uint32 *complexities = StringUtils::TokenizeUint32(sComplexities, numComplexities);
     uint32 *maxComplexity = std::max_element(complexities, complexities + numComplexities);
 
@@ -43,7 +43,6 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
     mCompressionStartTime = omp_get_wtime();
     mNumCandidates = 0;
     mProgress = -1;
-    uint32 candidateCount = 0;//MG
 
     if (mWriteReportFile == true)
         OpenReportFile(true);
@@ -61,9 +60,8 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
     mScreenReportCandidateDelta = 5000;
 
     // Initialize
-    uint32 complexityLvl = 0;
-    uint32 iteration = 0;
-    // mCT->CoverDB(mCT->GetCurStats());
+    uint32 complexityLvl = 1;
+    uint32 iteration = 1;
     auto *candidates = new CTSet();
     auto ctAlpha = mCT->Clone();
     candidates->Add(ctAlpha);
@@ -82,67 +80,85 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
         ProgressToDisk(mCT, 0, 0, numIsc, true, true);
     }
 
-    vector<bool> isDelIs (numIsc, false);
-
+    uint64 totIsCnt = 0;
     // Start: for all complexity levels from [0..max]:
     while (iteration <= *maxComplexity) {
         CTSet *best_prev = candidates;
         CoverStats &prevBestStats = best_prev->GetBestStats();
         candidates = new CTSet(beamWidth);
 
+        //printf("*\titeration:%u/%u", iteration, *maxComplexity);
+
         // For all item sets in the item set collection:
         for (uint64 i = 0; i < numIsc; i++) {
+            totIsCnt++;
             ItemSet *itemSet = ctlist[i]->Clone();
+            //printf("*\t\t ItemSet: %llu:%llu, ID: %llu\n", i, numIsc, totIsCnt);
             if (mNeedsOccs) {
                 mDB->DetermineOccurrences(itemSet);
             }
-            itemSet->SetID(i);
+            itemSet->SetID(totIsCnt);
             uint32 sup = itemSet->GetSupport();
             // ignore singletons and item sets under minimum support
             if (itemSet->GetLength() <= 1 || sup < mMinSup) {
                 delete itemSet;
-                isDelIs[i] = true;
+                //printf("*\t\t ItemSet: %llu:%llu, ID: %llu DEL!\n", i, numIsc, totIsCnt);
                 continue;
             }
+            //printf("*\t\t ItemSet: %llu:%llu, ID: %llu NO DEL!\n", i, numIsc, totIsCnt);
+
 
             // Add to all clones of item sets to all code tables
             best_prev->ResetIterator();
+            uint64 ctc = 1;
             while (!best_prev->IsIteratorEnd()) {
+                //printf("*\t\t ItemSet: %llu:%llu, ID: %llu, CTC:%llu\n", i, numIsc, totIsCnt, ctc);
                 CodeTable *curTable = best_prev->NextCodeTable();
                 //candidates->AddLim(curTable->Clone(), prevBestStats); // previous table in case we want tables from all complexities
                 if (!candidates->ContainsItemSet(curTable, itemSet)) {
                     curTable = curTable->Clone();
 
-                    curTable->Add(itemSet, itemSet->GetID());
-                    itemSet->SetUsageCount(0);
+                    //Create fresh copy
+                    totIsCnt++;
+                    ItemSet *toAdd = itemSet->Clone();
+                    toAdd->SetID(totIsCnt);
+
+                    curTable->Add(toAdd, toAdd->GetID());
+                    toAdd->SetUsageCount(0);
                     curTable->CoverDB(curTable->GetCurStats());
                     curTable->CommitAdd(mWriteCTLogFile);
 
                     if(curTable->GetCurStats().encSize < prevBestStats.encSize) {
                         if (candidates->GetNumTables() < beamWidth) {
+                            //printf("*\t\t\t ItemSet: %llu:%llu, ID: %llu, CTC:%llu ADD\n", i, numIsc, totIsCnt, ctc);
                             candidates->Add(curTable);
                         } else if (curTable->GetCurStats().encSize < candidates->GetWorstStats().encSize) {
+                            //printf("*\t\t\t ItemSet: %llu:%llu, ID: %llu, CTC:%llu ADD\n", i, numIsc, totIsCnt, ctc);
                             candidates->Add(curTable);
                         } else {
+                            //printf("*\t\t\t ItemSet: %llu:%llu, ID: %llu, CTC:%llu DEL\n", i, numIsc, totIsCnt, ctc);
                             delete curTable;
                         }
                     } else  {
+                        //printf("*\t\t\t ItemSet: %llu:%llu, ID: %llu, CTC:%llu DEL\n", i, numIsc, totIsCnt, ctc);
                         delete curTable;
                     }
                 }
+                ctc++;
             }
+            delete itemSet;
         }
 
 
         if (candidates->GetNumTables() == 0) {
             candidates = best_prev;
-            printf("BREAK");
+            printf("BREAK\n");
             break;
         }
         candidates->SortAndPrune(beamWidth);
 
         if (candidates->AvgCompression() < 0) {
-            THROW("L(D|M) < 0. That's not good.");
+            THROW("L(D|M) < 0. That's not good.\n");
         }
 
         if (iteration == *(complexities + complexityLvl)) {
@@ -157,6 +173,7 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
         stats.numCandidates = mNumCandidates;
         printf(" * Busy:\t\t(%ui, %da,%du,%" I64d ",%.0lf,%.0lf,%.0lf)\n", iteration, stats.alphItemsUsed, stats.numSetsUsed,
                stats.usgCountSum, stats.encDbSize, stats.encCTSize, stats.encSize);
+
         iteration++;
         delete best_prev;
     }
