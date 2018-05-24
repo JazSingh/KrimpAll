@@ -24,7 +24,8 @@ uint64 CTSet::GetNumTables() {
 }
 
 void CTSet::Add(CodeTable *codeTable) {
-    if(codeTables->size() > 0 && ContainsCodeTable(codeTable)) {
+    if(!codeTables->empty() && ContainsCodeTable(codeTable)) {
+        delete codeTable;
         return;
     }
     codeTables->push_back(codeTable);
@@ -32,6 +33,8 @@ void CTSet::Add(CodeTable *codeTable) {
 }
 
 void CTSet::PopBack() {
+    CodeTable *del = codeTables->back();
+    delete del;
     codeTables->pop_back();
     ResetIterator();
 }

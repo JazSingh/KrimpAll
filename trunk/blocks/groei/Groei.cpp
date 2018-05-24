@@ -62,6 +62,7 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
     // Initialize
     uint32 complexityLvl = 1;
     uint32 iteration = 1;
+
     auto *candidates = new CTSet();
     auto ctAlpha = mCT->Clone();
     candidates->Add(ctAlpha);
@@ -70,7 +71,6 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
     mISC->LoadItemSets(numIsc);
     ItemSet **ctlist = mISC->GetLoadedItemSets();
 
-    //TODO
     CoverStats stats = mCT->GetCurStats();
     stats.numCandidates = mNumCandidates;
     printf(" * Start:\t\t(stdTable, %da,%du,%" I64d ",%.0lf,%.0lf,%.0lf)\n", stats.alphItemsUsed, stats.numSetsUsed,
@@ -80,71 +80,57 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
         ProgressToDisk(mCT, 0, 0, numIsc, true, true);
     }
 
-    uint64 totIsCnt = 0;
     // Start: for all complexity levels from [0..max]:
     while (iteration <= *maxComplexity) {
         CTSet *best_prev = candidates;
         CoverStats &prevBestStats = best_prev->GetBestStats();
         candidates = new CTSet(beamWidth);
 
-        //printf("*\titeration:%u/%u", iteration, *maxComplexity);
-
-        // For all item sets in the item set collection:
         for (uint64 i = 0; i < numIsc; i++) {
-            totIsCnt++;
             ItemSet *itemSet = ctlist[i]->Clone();
-            //printf("*\t\t ItemSet: %llu:%llu, ID: %llu\n", i, numIsc, totIsCnt);
             if (mNeedsOccs) {
                 mDB->DetermineOccurrences(itemSet);
             }
-            itemSet->SetID(totIsCnt);
+            itemSet->SetID(i);
             uint32 sup = itemSet->GetSupport();
-            // ignore singletons and item sets under minimum support
+
             if (itemSet->GetLength() <= 1 || sup < mMinSup) {
                 delete itemSet;
-                //printf("*\t\t ItemSet: %llu:%llu, ID: %llu DEL!\n", i, numIsc, totIsCnt);
                 continue;
             }
-            //printf("*\t\t ItemSet: %llu:%llu, ID: %llu NO DEL!\n", i, numIsc, totIsCnt);
 
-
-            // Add to all clones of item sets to all code tables
             best_prev->ResetIterator();
-            uint64 ctc = 1;
             while (!best_prev->IsIteratorEnd()) {
-                //printf("*\t\t ItemSet: %llu:%llu, ID: %llu, CTC:%llu\n", i, numIsc, totIsCnt, ctc);
                 CodeTable *curTable = best_prev->NextCodeTable();
-                //candidates->AddLim(curTable->Clone(), prevBestStats); // previous table in case we want tables from all complexities
                 if (!candidates->ContainsItemSet(curTable, itemSet)) {
                     curTable = curTable->Clone();
 
-                    //Create fresh copy
-                    totIsCnt++;
                     ItemSet *toAdd = itemSet->Clone();
-                    toAdd->SetID(totIsCnt);
+                    toAdd->SetID(i);
 
                     curTable->Add(toAdd, toAdd->GetID());
                     toAdd->SetUsageCount(0);
                     curTable->CoverDB(curTable->GetCurStats());
                     curTable->CommitAdd(mWriteCTLogFile);
 
-                    if(curTable->GetCurStats().encSize < prevBestStats.encSize) {
+                    if (mPruneStrategy == PostAcceptPruneStrategy) { // Post-decide On-the-fly pruning
+                        PrunePostAccept(curTable);
+                    }
+
+                    if(curTable->GetCurStats().encSize <= prevBestStats.encSize) {
                         if (candidates->GetNumTables() < beamWidth) {
-                            //printf("*\t\t\t ItemSet: %llu:%llu, ID: %llu, CTC:%llu ADD\n", i, numIsc, totIsCnt, ctc);
                             candidates->Add(curTable);
                         } else if (curTable->GetCurStats().encSize < candidates->GetWorstStats().encSize) {
-                            //printf("*\t\t\t ItemSet: %llu:%llu, ID: %llu, CTC:%llu ADD\n", i, numIsc, totIsCnt, ctc);
+                            candidates->Sort();
+                            candidates->PopBack();
                             candidates->Add(curTable);
                         } else {
-                            //printf("*\t\t\t ItemSet: %llu:%llu, ID: %llu, CTC:%llu DEL\n", i, numIsc, totIsCnt, ctc);
                             delete curTable;
                         }
                     } else  {
-                        //printf("*\t\t\t ItemSet: %llu:%llu, ID: %llu, CTC:%llu DEL\n", i, numIsc, totIsCnt, ctc);
                         delete curTable;
                     }
                 }
-                ctc++;
             }
             delete itemSet;
         }

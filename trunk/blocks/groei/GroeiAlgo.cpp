@@ -7,6 +7,7 @@
 
 #include "GroeiAlgo.h"
 #include "Groei.h"
+#include "GroeiSlim.h"
 
 GroeiAlgo::GroeiAlgo(CodeTable *ct, HashPolicyType hashPolicy, Config *config) {
     mConfig = config;
@@ -34,6 +35,12 @@ KrimpAlgo *GroeiAlgo::CreateAlgo(const string &algoname, ItemSetType type, Confi
         HashPolicyType hashPolicy;
         strippedAlgoname = StringToHashPolicyType(strippedAlgoname, hashPolicy);
         return new Groei(CodeTable::Create(strippedAlgoname, type), hashPolicy, config);
+    }
+    if(algoname.compare(0, 9, "slimGroei") == 0) {
+        string strippedAlgoname = algoname.substr(10);
+        HashPolicyType hashPolicy;
+        strippedAlgoname = StringToHashPolicyType(strippedAlgoname, hashPolicy);
+        return new GroeiSlim(CodeTable::Create(strippedAlgoname, type), hashPolicy, config);
     }
     return KrimpAlgo::CreateAlgo(algoname, type);
 }

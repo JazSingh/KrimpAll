@@ -210,7 +210,7 @@ void GroeiTH::DoCompress(Config *config, Database *db, ItemSetCollection *isc, c
     ECHO(3, printf("** Finished compression.\n"));
 
     // Write transaction covers to disk
-    if (config->Read<bool>("writeCover", true)) {
+    if (config->Read<bool>("writeCover", false)) {
         CTSet* ctSet = ctt->GetCodeTableSet();
         uint64 numTables = ctSet->GetNumTables();
         ctSet->ResetIterator();

@@ -6,8 +6,17 @@
 #define FIC_GROEISLIM_H
 
 
-class GroeiSlim {
+#include "GroeiAlgo.h"
 
+class GroeiSlim: public GroeiAlgo {
+public:
+    GroeiSlim(CodeTable* ct, HashPolicyType hashPolicy, Config* config);
+
+    virtual CodeTable*	DoeJeDing(const uint64 candidateOffset=0, const uint32 startSup=0);
+
+private:
+
+    uint32 mMinSup;
 };
 
 

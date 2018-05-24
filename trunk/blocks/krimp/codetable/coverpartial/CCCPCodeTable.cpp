@@ -27,20 +27,20 @@ CCCPCodeTable<T>::CCCPCodeTable(const CCCPCodeTable &ct) : CodeTable(ct) { //TOD
 	for (uint32 i=0; i<ct.mCT.size(); i++) {
 		mCT.push_back(ct.mCT[i]->Clone());
 	}
-	mCTMasks = ct.mCTMasks; //TODO
+	mCTMasks = ct.mCTMasks;
 	mCTLen = ct.mCTLen;
-	mCTIdx = ct.mCTIdx; //TODO
-	mUsgCounts = ct.mUsgCounts; //TODO
-	mBackupUsgCounts = ct.mBackupUsgCounts; //TODO
-	mUsgCountForItemset = ct.mUsgCountForItemset; //TODO
+	mCTIdx = ct.mCTIdx;
+	mUsgCounts = ct.mUsgCounts;
+	mBackupUsgCounts = ct.mBackupUsgCounts;
+	mUsgCountForItemset = ct.mUsgCountForItemset; =
 
-	mCDB = ct.mCDB; //TODO
+	mCDB = ct.mCDB;
 
-	mAbDbOccs = ct.mAbDbOccs; //TODO
+	mAbDbOccs = ct.mAbDbOccs;
 
-	mNumDBRows = ct.mNumDBRows; //TODO
+	mNumDBRows = ct.mNumDBRows;
 
-	mUseOccs = ct.mUseOccs; //TODO
+	mUseOccs = ct.mUseOccs;
 
 	mAlphabet = ct.mAlphabet;
 	mOldAlphabet = ct.mOldAlphabet;
@@ -59,8 +59,7 @@ CCCPCodeTable<T>::CCCPCodeTable(const CCCPCodeTable &ct) : CodeTable(ct) { //TOD
 template <ItemSetType T>
 CCCPCodeTable<T>::~CCCPCodeTable() {
 	for (uint32 i=0; i<mCT.size(); i++) {
-		//mCT[i]->UnRef();
-		delete mCT[i];
+		mCT[i]->UnRef();
 	}
 	delete[] mChangeItemMask;
 	delete[] mMask;
@@ -835,7 +834,7 @@ void CCCPCodeTable<T>::DebugPrint() {
 #if defined (_MSC_VER) && defined (_WINDOWS)
 		printf("%I64d%s", mCT[i]->GetID(), i != mCT.size() - 1 ? " " : "");
 #elif defined (__GNUC__) && (defined (__unix__) || (defined (__APPLE__) && defined (__MACH__)))
-		printf("%lu%s", mCT[i]->GetID(), i != mCT.size() - 1 ? " " : "");
+		printf("%llu%s", mCT[i]->GetID(), i != mCT.size() - 1 ? " " : "");
 #endif
 	}
 	printf(")\n");
