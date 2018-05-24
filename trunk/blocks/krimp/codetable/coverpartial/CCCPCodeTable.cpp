@@ -32,7 +32,7 @@ CCCPCodeTable<T>::CCCPCodeTable(const CCCPCodeTable &ct) : CodeTable(ct) { //TOD
 	mCTIdx = ct.mCTIdx;
 	mUsgCounts = ct.mUsgCounts;
 	mBackupUsgCounts = ct.mBackupUsgCounts;
-	mUsgCountForItemset = ct.mUsgCountForItemset; =
+	mUsgCountForItemset = ct.mUsgCountForItemset;
 
 	mCDB = ct.mCDB;
 
