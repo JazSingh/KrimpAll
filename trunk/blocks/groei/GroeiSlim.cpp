@@ -16,12 +16,13 @@ GroeiSlim::GroeiSlim(CodeTable *ct, HashPolicyType hashPolicy, Config *config) :
 
 CodeTable *GroeiSlim::DoeJeDing(const uint64 candidateOffset, const uint32 startSup) {
     // Read properties from config
-    uint32 beamWidth = 50; //mConfig->Read<uint32>("beamWidth");
-    uint32 numComplexities = 1; //mConfig->Read<uint32>("numComplexities");
-    string sComplexities = "250"; //mConfig->Read<string>("complexities", "");
+    uint32 beamWidth = mConfig->Read<uint32>("beamWidth");
+    uint32 numComplexities = mConfig->Read<uint32>("numComplexities");
+    string sComplexities = mConfig->Read<string>("complexities", "");
     uint32 *complexities = StringUtils::TokenizeUint32(sComplexities, numComplexities);
     uint32 *maxComplexity = std::max_element(complexities, complexities + numComplexities);
-    ItemSet *m;
+
+    std::cout << " ** Parameters:\t [beam width: " << beamWidth << "], [number of complexities: " << numComplexities << "], [complexities: " << sComplexities << "]\n" ;
 
     { // Extract minsup parameter from tag
         string dbName;
@@ -58,10 +59,12 @@ CodeTable *GroeiSlim::DoeJeDing(const uint64 candidateOffset, const uint32 start
     // Initialize
     uint32 complexityLvl = 1;
     uint32 iteration = 1;
+
     auto *candidates = new CTSet();
     auto ctAlpha = mCT->Clone();
     candidates->Add(ctAlpha);
 
+    // Init stats
     CoverStats stats = mCT->GetCurStats();
     stats.numCandidates = mNumCandidates;
     printf(" * Start:\t\t(stdTable, %da,%du,%" I64d ",%.0lf,%.0lf,%.0lf)\n", stats.alphItemsUsed, stats.numSetsUsed,
@@ -69,6 +72,9 @@ CodeTable *GroeiSlim::DoeJeDing(const uint64 candidateOffset, const uint32 start
 
     uint64 numCandidates;
     numCandidates = 0;
+
+    ItemSet *m;
+
     while (iteration <= *maxComplexity) {
         CTSet *best_prev = candidates;
         CoverStats &prevBestStats = best_prev->GetBestStats();
@@ -118,7 +124,8 @@ CodeTable *GroeiSlim::DoeJeDing(const uint64 candidateOffset, const uint32 start
                         candidate->Add(accepted);
                         accepted->SetUsageCount(0);
                         candidate->CoverDB(curStats);
-                        candidate->CommitAdd(mWriteCTLogFile);
+                        candidate->CommitAdd(false);
+
                         if (curStats.encDbSize < 0) {
                             THROW("L(D|M) < 0. That's not good.");
                         }
@@ -126,6 +133,7 @@ CodeTable *GroeiSlim::DoeJeDing(const uint64 candidateOffset, const uint32 start
                         if (mPruneStrategy == PostAcceptPruneStrategy) { // Post-decide On-the-fly pruning
                             PrunePostAccept(candidate);
                         }
+
                         if (candidate->GetCurStats().encSize < prevBestStats.encSize) {
                             if (candidates->GetNumTables() < beamWidth) {
                                 candidates->Add(candidate);
@@ -150,7 +158,7 @@ CodeTable *GroeiSlim::DoeJeDing(const uint64 candidateOffset, const uint32 start
 
         if (candidates->GetNumTables() == 0) {
             candidates = best_prev;
-            printf("BREAK\n");
+            printf("No improvement compared to last iteration. Quitting...\n");
             break;
         }
 
@@ -166,6 +174,9 @@ CodeTable *GroeiSlim::DoeJeDing(const uint64 candidateOffset, const uint32 start
         }
 
         mCT = candidates->GetBestTable();
+        if (mWriteProgressToDisk == true) {
+            ProgressToDisk(mCT, 0, 0, 0, true, true);
+        }
         stats = mCT->GetCurStats();
         stats.numCandidates = mNumCandidates;
         printf(" * Busy:\t\t(%ui, %da,%du,%" I64d ",%.0lf,%.0lf,%.0lf)\n", iteration, stats.alphItemsUsed,

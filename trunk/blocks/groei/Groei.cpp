@@ -21,11 +21,13 @@ Groei::Groei(CodeTable *ct, HashPolicyType hashPolicy, Config *config)
 
 CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup) {
     // Read properties from config
-    uint32 beamWidth = 10; //mConfig->Read<uint32>("beamWidth");
-    uint32 numComplexities = 1; //mConfig->Read<uint32>("numComplexities");
-    string sComplexities = "60"; //mConfig->Read<string>("complexities", "");
+    uint32 beamWidth = mConfig->Read<uint32>("beamWidth");
+    uint32 numComplexities = mConfig->Read<uint32>("numComplexities");
+    string sComplexities = mConfig->Read<string>("complexities", "");
     uint32 *complexities = StringUtils::TokenizeUint32(sComplexities, numComplexities);
     uint32 *maxComplexity = std::max_element(complexities, complexities + numComplexities);
+
+    std::cout << " ** Parameters:\t [beam width: " << beamWidth << "], [number of complexities: " << numComplexities << "], [complexities: " << sComplexities << "]\n" ;
 
     { // Extract minsup parameter from tag
         string dbName;
@@ -71,6 +73,7 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
     mISC->LoadItemSets(numIsc);
     ItemSet **ctlist = mISC->GetLoadedItemSets();
 
+    // Init stats
     CoverStats stats = mCT->GetCurStats();
     stats.numCandidates = mNumCandidates;
     printf(" * Start:\t\t(stdTable, %da,%du,%" I64d ",%.0lf,%.0lf,%.0lf)\n", stats.alphItemsUsed, stats.numSetsUsed,
@@ -80,7 +83,6 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
         ProgressToDisk(mCT, 0, 0, numIsc, true, true);
     }
 
-    // Start: for all complexity levels from [0..max]:
     while (iteration <= *maxComplexity) {
         CTSet *best_prev = candidates;
         CoverStats &prevBestStats = best_prev->GetBestStats();
@@ -92,9 +94,8 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
                 mDB->DetermineOccurrences(itemSet);
             }
             itemSet->SetID(i);
-            uint32 sup = itemSet->GetSupport();
 
-            if (itemSet->GetLength() <= 1 || sup < mMinSup) {
+            if (itemSet->GetLength() <= 1 || itemSet->GetSupport() < mMinSup) {
                 delete itemSet;
                 continue;
             }
@@ -111,13 +112,13 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
                     curTable->Add(toAdd, toAdd->GetID());
                     toAdd->SetUsageCount(0);
                     curTable->CoverDB(curTable->GetCurStats());
-                    curTable->CommitAdd(mWriteCTLogFile);
+                    curTable->CommitAdd(false);
 
                     if (mPruneStrategy == PostAcceptPruneStrategy) { // Post-decide On-the-fly pruning
                         PrunePostAccept(curTable);
                     }
 
-                    if(curTable->GetCurStats().encSize <= prevBestStats.encSize) {
+                    if(curTable->GetCurStats().encSize < prevBestStats.encSize) {
                         if (candidates->GetNumTables() < beamWidth) {
                             candidates->Add(curTable);
                         } else if (curTable->GetCurStats().encSize < candidates->GetWorstStats().encSize) {
@@ -138,9 +139,10 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
 
         if (candidates->GetNumTables() == 0) {
             candidates = best_prev;
-            printf("BREAK\n");
+            printf("No improvement compared to last iteration. Quitting...\n");
             break;
         }
+
         candidates->SortAndPrune(beamWidth);
 
         if (candidates->AvgCompression() < 0) {
@@ -155,7 +157,8 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
         mCT = candidates->GetBestTable();
         if (mWriteProgressToDisk == true) {
             ProgressToDisk(mCT, 0, 0, numIsc, true, true);
-        }    CoverStats stats = mCT->GetCurStats();
+        }
+        stats = mCT->GetCurStats();
         stats.numCandidates = mNumCandidates;
         printf(" * Busy:\t\t(%ui, %da,%du,%" I64d ",%.0lf,%.0lf,%.0lf)\n", iteration, stats.alphItemsUsed, stats.numSetsUsed,
                stats.usgCountSum, stats.encDbSize, stats.encCTSize, stats.encSize);
