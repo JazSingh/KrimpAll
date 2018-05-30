@@ -122,9 +122,8 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
                         if (candidates->GetNumTables() < beamWidth) {
                             candidates->Add(curTable);
                         } else if (curTable->GetCurStats().encSize < candidates->GetWorstStats().encSize) {
-                            candidates->Sort();
-                            candidates->PopBack();
                             candidates->Add(curTable);
+                            candidates->SortAndPrune(beamWidth);
                         } else {
                             delete curTable;
                         }
@@ -147,6 +146,12 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
 
         if (candidates->AvgCompression() < 0) {
             THROW("L(D|M) < 0. That's not good.\n");
+        }
+
+        if(candidates->GetBestTable()->GetCurSize() >= mCT->GetCurSize()) {
+            candidates = best_prev;
+            printf("No improvement compared to last iteration. Quitting...\n");
+            break;
         }
 
         if (iteration == *(complexities + complexityLvl)) {

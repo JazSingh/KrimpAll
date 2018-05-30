@@ -2,18 +2,18 @@
 // Created by Jaspreet Singh on 25/05/2018.
 //
 
-#include <db/Database.h>
 #include <omp.h>
+#include <db/Database.h>
 #include <StringUtils.h>
 #include <isc/ItemSetCollection.h>
-#include "GroeiAlt.h"
+#include "GroeiNoS.h"
 
-GroeiAlt::GroeiAlt(CodeTable *ct, HashPolicyType hashPolicy, Config *config)
+GroeiNoS::GroeiNoS(CodeTable *ct, HashPolicyType hashPolicy, Config *config)
         : GroeiAlgo(ct, hashPolicy, config) {
     mWriteLogFile = true;
 }
 
-CodeTable *GroeiAlt::DoeJeDing(const uint64 candidateOffset, const uint32 startSup) {
+CodeTable *GroeiNoS::DoeJeDing(const uint64 candidateOffset, const uint32 startSup) {
     // Read properties from config
     uint32 beamWidth = mConfig->Read<uint32>("beamWidth");
     uint32 numComplexities = mConfig->Read<uint32>("numComplexities");
@@ -79,26 +79,34 @@ CodeTable *GroeiAlt::DoeJeDing(const uint64 candidateOffset, const uint32 startS
 
     while (iteration <= *maxComplexity) {
         CTSet *best_prev = candidates;
-        CoverStats &prevBestStats = best_prev->GetBestStats();
+        CoverStats &prevWorstStats = best_prev->GetWorstStats();
         candidates = new CTSet(beamWidth);
 
-        best_prev->ResetIterator();
-        while (!best_prev->IsIteratorEnd()) {
-            CodeTable *ct = best_prev->NextCodeTable()->Clone();
-            for (uint64 i = 0; i < numIsc; i++) {
-                ItemSet *itemSet = ctlist[i]->Clone();
-                if (mNeedsOccs) {
-                    mDB->DetermineOccurrences(itemSet);
-                }
-                itemSet->SetID(i);
+        for (uint64 i = 0; i < numIsc; i++) {
+            ItemSet *itemSet = ctlist[i]->Clone();
+            if (mNeedsOccs) {
+                mDB->DetermineOccurrences(itemSet);
+            }
+            itemSet->SetID(i);
 
-                if (itemSet->GetLength() <= 1 || itemSet->GetSupport() < mMinSup) {
-                    delete itemSet;
-                    continue;
+            if (itemSet->GetLength() <= 1 || itemSet->GetSupport() < mMinSup) {
+                delete itemSet;
+                continue;
+            }
+
+            best_prev->ResetIterator();
+            while (!best_prev->IsIteratorEnd()) {
+
+                CodeTable *curTable = best_prev->NextCodeTable();
+                if (candidates->GetNumTables() < beamWidth) {
+                    candidates->Add(curTable->Clone());
+                } else if (curTable->GetCurStats().encSize < candidates->GetWorstStats().encSize) {
+                    candidates->Add(curTable->Clone());
+                    candidates->SortAndPrune(beamWidth);
                 }
 
-                if (!candidates->ContainsItemSet(ct, itemSet)) {
-                    CodeTable *curTable = ct->Clone();
+                if (!candidates->ContainsItemSet(curTable, itemSet)) {
+                    curTable = curTable->Clone();
 
                     ItemSet *toAdd = itemSet->Clone();
                     toAdd->SetID(i);
@@ -112,23 +120,21 @@ CodeTable *GroeiAlt::DoeJeDing(const uint64 candidateOffset, const uint32 startS
                         PrunePostAccept(curTable);
                     }
 
-                    if (curTable->GetCurStats().encSize < prevBestStats.encSize) {
+                    if(curTable->GetCurStats().encSize < prevWorstStats.encSize) {
                         if (candidates->GetNumTables() < beamWidth) {
                             candidates->Add(curTable);
                         } else if (curTable->GetCurStats().encSize < candidates->GetWorstStats().encSize) {
-                            candidates->Sort();
-                            candidates->PopBack();
                             candidates->Add(curTable);
+                            candidates->SortAndPrune(beamWidth);
                         } else {
                             delete curTable;
                         }
-                    } else {
+                    } else  {
                         delete curTable;
                     }
                 }
-                delete itemSet;
             }
-            delete ct;
+            delete itemSet;
         }
 
 
@@ -142,6 +148,12 @@ CodeTable *GroeiAlt::DoeJeDing(const uint64 candidateOffset, const uint32 startS
 
         if (candidates->AvgCompression() < 0) {
             THROW("L(D|M) < 0. That's not good.\n");
+        }
+
+        if(candidates->GetBestTable()->GetCurSize() >= mCT->GetCurSize()) {
+            candidates = best_prev;
+            printf("No improvement compared to last iteration. Quitting...\n");
+            break;
         }
 
         if (iteration == *(complexities + complexityLvl)) {

@@ -8,7 +8,8 @@
 #include "GroeiAlgo.h"
 #include "Groei.h"
 #include "GroeiSlim.h"
-#include "GroeiAlt.h"
+#include "GroeiNoS.h"
+#include "GroeiSlimNoS.h"
 
 GroeiAlgo::GroeiAlgo(CodeTable *ct, HashPolicyType hashPolicy, Config *config) {
     mConfig = config;
@@ -31,23 +32,29 @@ string GroeiAlgo::GetShortName() {
 }
 
 KrimpAlgo *GroeiAlgo::CreateAlgo(const string &algoname, ItemSetType type, Config *config) {
-    if(algoname.compare(0, 8, "groeiAlt") == 0) {
-        string strippedAlgoname = algoname.substr(9);
+    if(algoname.compare(0, 12, "groeiSlimNoS") == 0) { // GROEI + SLIM + PREV
+        string strippedAlgoname = algoname.substr(13);
         HashPolicyType hashPolicy;
         strippedAlgoname = StringToHashPolicyType(strippedAlgoname, hashPolicy);
-        return new GroeiAlt(CodeTable::Create(strippedAlgoname, type), hashPolicy, config);
+        return new GroeiSlimNoS(CodeTable::Create(strippedAlgoname, type), hashPolicy, config);
     }
-    if(algoname.compare(0, 5, "groei") == 0) {
-        string strippedAlgoname = algoname.substr(6);
-        HashPolicyType hashPolicy;
-        strippedAlgoname = StringToHashPolicyType(strippedAlgoname, hashPolicy);
-        return new Groei(CodeTable::Create(strippedAlgoname, type), hashPolicy, config);
-    }
-    if(algoname.compare(0, 9, "slimGroei") == 0) {
+    if(algoname.compare(0, 9, "groeiSlim") == 0) { // GROEI + SLIM
         string strippedAlgoname = algoname.substr(10);
         HashPolicyType hashPolicy;
         strippedAlgoname = StringToHashPolicyType(strippedAlgoname, hashPolicy);
         return new GroeiSlim(CodeTable::Create(strippedAlgoname, type), hashPolicy, config);
+    }
+    if(algoname.compare(0, 8, "groeiNoS") == 0) { // GROEI + PREV
+        string strippedAlgoname = algoname.substr(9);
+        HashPolicyType hashPolicy;
+        strippedAlgoname = StringToHashPolicyType(strippedAlgoname, hashPolicy);
+        return new GroeiNoS(CodeTable::Create(strippedAlgoname, type), hashPolicy, config);
+    }
+    if(algoname.compare(0, 5, "groei") == 0) { // GROEI + PREV
+        string strippedAlgoname = algoname.substr(6);
+        HashPolicyType hashPolicy;
+        strippedAlgoname = StringToHashPolicyType(strippedAlgoname, hashPolicy);
+        return new Groei(CodeTable::Create(strippedAlgoname, type), hashPolicy, config);
     }
     return KrimpAlgo::CreateAlgo(algoname, type);
 }
@@ -77,7 +84,7 @@ string GroeiAlgo::StringToHashPolicyType(string algoname, HashPolicyType &hashPo
     }
     return algoname;}
 
-    //TODO
+//TODO
 void GroeiAlgo::ProgressToScreen(const uint64 curCandidate, CodeTable *ct) {
     if(Bass::GetOutputLevel() > 0) {
         uint64 canDif = curCandidate - mScreenReportCandidateIdx;

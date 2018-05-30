@@ -63,6 +63,7 @@ void GroeiTH::Compress(Config *config, const string tagIn) {
     string dbName = config->Read<string>("dbname", iscName.substr(0,iscName.find_first_of('-')));
     ItemSetType dataType = ItemSet::StringToType(config->Read<string>("datatype",""));
     DbFileType dbType = DbFile::StringToType(config->Read<string>("dbinencoding",""));
+    string algoName = config->Read<string>("algo").substr(0, config->Read<string>("algo").find_first_of('-'));
 
     // Determine Pruning Strategy
     string pruneStrategyStr = config->Read<string>("prunestrategy","nop");
@@ -70,7 +71,7 @@ void GroeiTH::Compress(Config *config, const string tagIn) {
     string tag, timetag;
     if(tagIn.length() == 0) {
         timetag = TimeUtils::GetTimeStampString();
-        tag = iscName + "-" + pruneStrategyStr + "-" + timetag;
+        tag = iscName + "-" + algoName + "-" + pruneStrategyStr + "-" + timetag;
     } else {
         tag = tagIn;
         timetag = tag.substr(tag.find_last_of('-')+1,tag.length()-1-tag.find_last_of('-'));

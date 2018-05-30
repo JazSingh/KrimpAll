@@ -1,20 +1,19 @@
 //
-// Created by Jaspreet Singh on 19/04/2018.
+// Created by Jaspreet Singh on 25/05/2018.
 //
 
-#include <omp.h>
-#include <db/Database.h>
-#include "../slim/codetable/CCPUCodeTable.h"
 #include <StringUtils.h>
-#include <boost/tokenizer.hpp>
+#include <db/Database.h>
 #include <isc/ItemSetCollection.h>
-#include "GroeiSlim.h"
+#include <omp.h>
+#include "GroeiSlimNoS.h"
 
-GroeiSlim::GroeiSlim(CodeTable *ct, HashPolicyType hashPolicy, Config *config) : GroeiAlgo(ct, hashPolicy, config) {
+GroeiSlimNoS::GroeiSlimNoS(CodeTable *ct, HashPolicyType hashPolicy, Config *config)
+        : GroeiAlgo(ct, hashPolicy, config) {
     mWriteLogFile = true;
 }
 
-CodeTable *GroeiSlim::DoeJeDing(const uint64 candidateOffset, const uint32 startSup) {
+CodeTable *GroeiSlimNoS::DoeJeDing(const uint64 candidateOffset, const uint32 startSup) {
     // Read properties from config
     uint32 beamWidth = mConfig->Read<uint32>("beamWidth");
     uint32 numComplexities = mConfig->Read<uint32>("numComplexities");
@@ -77,13 +76,21 @@ CodeTable *GroeiSlim::DoeJeDing(const uint64 candidateOffset, const uint32 start
 
     while (iteration <= *maxComplexity) {
         CTSet *best_prev = candidates;
-        CoverStats &prevBestStats = best_prev->GetBestStats();
+        CoverStats &prevWorstStats = best_prev->GetWorstStats();
         candidates = new CTSet(beamWidth);
         best_prev->ResetIterator();
 
         while (!best_prev->IsIteratorEnd()) {
             CodeTable *prev = best_prev->NextCodeTable();
             CoverStats &prevStats = prev->GetCurStats();
+
+            if (candidates->GetNumTables() < beamWidth) {
+                candidates->Add(prev->Clone());
+            } else if (prev->GetCurStats().encSize <
+                       candidates->GetWorstStats().encSize) {
+                candidates->Add(prev->Clone());
+                candidates->SortAndPrune(beamWidth);
+            }
 
             islist *ctlist = prev->GetItemSetList();
             ctlist->splice(ctlist->end(), *prev->GetSingletonList());
@@ -134,7 +141,7 @@ CodeTable *GroeiSlim::DoeJeDing(const uint64 candidateOffset, const uint32 start
                             PrunePostAccept(candidate);
                         }
 
-                        if (candidate->GetCurStats().encSize < prevBestStats.encSize) {
+                        if (candidate->GetCurStats().encSize < prevWorstStats.encSize) {
                             if (candidates->GetNumTables() < beamWidth) {
                                 candidates->Add(candidate);
                             } else if (candidate->GetCurStats().encSize <

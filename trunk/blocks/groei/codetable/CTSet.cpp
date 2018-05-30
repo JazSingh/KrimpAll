@@ -3,7 +3,6 @@
 //
 
 #include "../../krimp/codetable/CodeTable.h"
-#include "CTSet.h"
 
 using namespace std;
 
@@ -53,7 +52,7 @@ void CTSet::SortAndPrune(uint32 numTablesRemain) {
     Sort();
     if (codeTables->size() <= numTablesRemain) {
         return;
-    } // Is this even possible?
+    }
     auto i = codeTables->begin();
     for(uint64 j = numTablesRemain; j < codeTables->size(); j++) {
         CodeTable *toDel = *(i + j);
