@@ -1,5 +1,3 @@
-#ifdef BLOCK_CLASSIFIER
-
 #include "../../global.h"
 
 // -- bass
@@ -142,4 +140,3 @@ void CtAnalyser::EndTestCover() {
 	fclose(mFp);
 	mFp = NULL;
 }
-#endif // BLOCK_CLASSIFIER

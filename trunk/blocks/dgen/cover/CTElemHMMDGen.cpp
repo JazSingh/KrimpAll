@@ -1,4 +1,3 @@
-#ifdef BLOCK_DATAGEN
 
 #include "../../../global.h"
 
@@ -9,7 +8,7 @@
 #include <itemstructs/ItemSet.h>
 #include <itemstructs/CoverSet.h>
 
-#include "../../../algo/CTFile.h"
+#include "../../../blocks/krimp/codetable/CTFile.h"
 #include "../DGSet.h"
 #include "../DGen.h"
 #include "CTElemHMMDGen.h"
@@ -231,4 +230,3 @@ Database* CTElemHMMDGen::GenerateDatabase(uint32 numRows) {
 	return db;
 }
 
-#endif 

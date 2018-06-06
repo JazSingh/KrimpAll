@@ -7,11 +7,11 @@
 // Note1: editing anything here results in full rebuild of fic!
 // Note2: _PUBLIC_RELEASE overrules this config and is configured in Blocks.h.
 
-//#define ENABLE_CLASSIFIER
+#define ENABLE_CLASSIFIER
 //#define ENABLE_CLUSTER
 #define ENABLE_SLIM
 #define ENABLE_GROEI
-//#define ENABLE_DATAGEN
+#define ENABLE_DATAGEN
 //#define ENABLE_EMM
 //#define ENABLE_LESS
 //#define ENABLE_OCCLASSIFIER

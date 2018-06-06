@@ -1,5 +1,3 @@
-#ifdef ENABLE_DATAGEN
-
 #include "../global.h"
 
 // -- qtils
@@ -13,7 +11,7 @@
 #include <isc/ItemSetCollection.h>
 #include <isc/IscFile.h>
 
-#include "../algo/CodeTable.h"
+#include "../blocks/krimp/codetable/CodeTable.h"
 #include "../blocks/dgen/DGen.h"
 #include "../blocks/dgen/DGSet.h"
 
@@ -1883,5 +1881,3 @@ void DataGenTH::CompareISCs() {
 	Bass::SetOutputLevel(outputLevelBak);
 
 }
-
-#endif // ENABLE_DATAGEN

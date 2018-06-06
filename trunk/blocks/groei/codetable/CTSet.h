@@ -41,6 +41,18 @@ public:
     //Stats
     double AvgCompression();
 
+    double* CalcProbs(double *encLengths);
+
+    void CalcProbs(Database *db);
+
+    double* SummarizeProbs(Database *db);
+
+    double* CalcEncLengths(ItemSet* is);
+
+    void CalcEncLengths(Database *db);
+
+    void CalcEntropy(Database *db);
+
     uint64 GetNumTables();
 
     void PrintStats();
@@ -53,6 +65,8 @@ public:
 
     CodeTable *GetWorstTable();
 
+    void Dissimilarity(Database *db);
+
     // Iteration stuff
     CodeTable *NextCodeTable();
 
@@ -60,6 +74,13 @@ public:
 
     void ResetIterator();
 
+    double **GetProbs() {return probs;}
+
+    double **GetEncLengths() {return encLengths;}
+
+    double *GetEntropies() {return entropies;}
+
+    double GetTotalEntropy() {return totalEntropy;}
 
 protected:
 
@@ -70,6 +91,11 @@ private:
     ctVec::iterator curTable;
 
     uint64 maxTables;
+
+    double **probs;
+    double **encLengths;
+    double *entropies;
+    double totalEntropy;
 };
 
 

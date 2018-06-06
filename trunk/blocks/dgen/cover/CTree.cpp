@@ -1,4 +1,3 @@
-#if defined(BLOCK_DATAGEN) || defined (BLOCK_CLASSIFIER)
 
 #include "../../../global.h"
 
@@ -428,5 +427,3 @@ void CTree::FantasizeItemSet(CoverSet *cset, ItemSet *gset, uint32 fromCodingSet
 	// stop codon gekozen
 	return;
 }
-
-#endif // BLOCK_DATAGEN

@@ -1,5 +1,3 @@
-#if defined(BLOCK_DATAGEN) || defined (BLOCK_CLASSIFIER)
-
 #include "../../../global.h"
 
 #include <itemstructs/ItemSet.h>
@@ -34,5 +32,3 @@ CTreeSet::~CTreeSet() {
 void CTreeSet::AddUsage(CTreeNode *ctn) {
 	mUsages->push_back(ctn);
 }
-
-#endif // BLOCK_DATAGEN

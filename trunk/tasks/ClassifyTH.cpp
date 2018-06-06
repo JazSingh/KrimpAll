@@ -1,5 +1,3 @@
-#ifdef ENABLE_CLASSIFIER
-
 #include "../global.h"
 
 // system
@@ -79,6 +77,8 @@ string ClassifyTH::BuildWorkingDir() {
 				algo = algo.substr(7);
 			else if(algo.compare(0, 7, "slimMJ-") == 0)
 				algo = algo.substr(7);
+            else if(algo.compare(0, 13, "groeiSlimNoS-") == 0)
+                algo = algo.substr(13);
 			CodeTable *ct = CodeTable::Create(algo, Uint16ItemSetType); // ??? whoa, ugly
 			mTag += "-" + ct->GetShortName();
 			delete ct;
@@ -109,7 +109,7 @@ void ClassifyTH::ClassifyCompress() {
 	Database *db = Database::RetrieveDatabase(dbName, dataType, dbType);
 
 	// Read config values
-	string pruneStrategy = mConfig->Read<string>("prunestrategy","nop");
+	string pruneStrategy = mConfig->Read<string>("prunestrategy","pop");
 	uint32 numFolds		= mConfig->Read<uint32>("numfolds");
 	time_t seed			= mConfig->Read<uint32>("seed");
 	if(seed == 0)		{ time(&seed); mConfig->Set("seed", seed); }
@@ -389,5 +389,3 @@ void ClassifyTH::ComputeCoverTree() {
 	delete ctree;
 	delete db;
 }
-
-#endif // ENABLE_CLASSIFIER

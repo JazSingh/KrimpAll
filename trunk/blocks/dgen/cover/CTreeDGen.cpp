@@ -1,4 +1,3 @@
-#ifdef BLOCK_DATAGEN
 
 #include "../../../global.h"
 
@@ -8,7 +7,7 @@
 #include <itemstructs/ItemSet.h>
 #include <itemstructs/CoverSet.h>
 
-#include "../../../algo/CTFile.h"
+#include "../../../blocks/krimp/codetable/CTFile.h"
 #include "CTreeSet.h"
 #include "CTreeNode.h"
 
@@ -120,5 +119,3 @@ void CTreeDGen::BuildModel(Database *db, Config *config, const string &ctfname) 
 Database* CTreeDGen::GenerateDatabase(uint32 numRows) {
 	return NULL;
 }
-
-#endif // BLOCK_DATAGEN

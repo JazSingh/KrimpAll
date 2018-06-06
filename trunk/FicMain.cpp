@@ -84,6 +84,10 @@
 
 #include "FicMain.h"
 #include "tasks/GroeiTH.h"
+#include "tasks/ClassifyTH.h"
+#include "tasks/SlimTH.h"
+#include "tasks/DataGenTH.h"
+#include "blocks/groei/GroeiAlgo.h"
 
 const string FicMain::ficVersion = "mkIII beta";
 
@@ -105,22 +109,13 @@ void FicMain::Execute() {
 			if(mTaskClass.compare("main") == 0)				th = new MainTH(mConfig);
 	else	if(mTaskClass.compare("mine") == 0)				th = new MineTH(mConfig);
 	else	if(mTaskClass.compare("datatrans") == 0)		th = new DataTransformTH(mConfig);
-
-#ifdef ENABLE_CLASSIFIER
 	else	if(mTaskClass.compare("classify") == 0)			th = new ClassifyTH(mConfig);
-#endif
 #ifdef ENABLE_CLUSTER
 	else	if(mTaskClass.compare("cluster") == 0)			th = new ClusterTH(mConfig);
 #endif
-#ifdef ENABLE_SLIM
 	else	if(mTaskClass.compare("compress_ng") == 0)		th = new SlimTH(mConfig);
-#endif
-#ifdef ENABLE_GROEI
 	else	if(mTaskClass.compare("compress_groei") == 0)	th = new GroeiTH(mConfig);
-#endif
-#ifdef ENABLE_DATAGEN
 	else	if(mTaskClass.compare("dgen") == 0)				th = new DataGenTH(mConfig);
-#endif
 #ifdef ENABLE_EMM
 	else	if(mTaskClass.compare("exceptional") == 0)		th = new ExceptionalTH(mConfig);
 #endif
@@ -492,7 +487,7 @@ void FicMain::MineAndWriteCodeTables(const string &path, Database *db, Config *c
 
 	// Build Algo
 	string algoName = config->Read<string>("algo");
-	KrimpAlgo *algo = SlimAlgo::CreateAlgo(algoName, db->GetDataType(), config);
+	KrimpAlgo *algo = GroeiAlgo::CreateAlgo(algoName, db->GetDataType(), config);
 	if(algo == NULL) {
 		delete isc;
 		throw string(__FUNCTION__) + ": Unknown algorithm: " + algoName;

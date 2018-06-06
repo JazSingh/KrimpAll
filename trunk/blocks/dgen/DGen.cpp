@@ -1,4 +1,3 @@
-#ifdef BLOCK_DATAGEN
 
 #include "../../global.h"
 
@@ -7,8 +6,8 @@
 #include <itemstructs/CoverSet.h>
 
 // Ct-inlees dingen
-#include "../../algo/CTFile.h"
-#include "../../algo/CodeTable.h"
+#include "../../blocks/krimp/codetable/CTFile.h"
+#include "../../blocks/krimp/codetable/CodeTable.h"
 
 #include "DGSet.h"
 #include "DGen.h"
@@ -236,5 +235,3 @@ DGen* DGen::Create(string type) {
 	//	return new CTreeDGen();
 	throw string("Dunno DGen Type: ") + type;
 }
-
-#endif // BLOCK_DATAGEN

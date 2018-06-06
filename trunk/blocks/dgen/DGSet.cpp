@@ -1,4 +1,3 @@
-#if defined(BLOCK_DATAGEN) || defined (BLOCK_CLASSIFIER)
 
 #include "../global.h"
 
@@ -33,5 +32,3 @@ void DGSet::SetItemSet(ItemSet *is) {
 	delete mItemSet;
 	mItemSet = is;
 }
-
-#endif // BLOCK_DATAGEN

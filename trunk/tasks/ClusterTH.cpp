@@ -27,7 +27,7 @@
 #include "../blocks/dgen/DGen.h"
 #include "../blocks/ptree/PTree.h"
 
-#include "../algo/CodeTable.h"
+#include "../blocks/krimp/codetable/CodeTable.h"
 #include "../FicConf.h"
 #include "../FicMain.h"
 

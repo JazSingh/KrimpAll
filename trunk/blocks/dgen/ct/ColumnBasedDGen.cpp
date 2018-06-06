@@ -1,4 +1,3 @@
-#ifdef BLOCK_DATAGEN
 
 #include "../../../global.h"
 
@@ -10,7 +9,7 @@
 #include <itemstructs/ItemSet.h>
 #include <itemstructs/CoverSet.h>
 
-#include "../../../algo/CTFile.h"
+#include "../../../blocks/krimp/codetable/CTFile.h"
 #include "../DGSet.h"
 #include "../DGen.h"
 #include "ColumnBasedDGen.h"
@@ -177,5 +176,3 @@ Database* ColumnBasedDGen::GenerateDatabase(uint32 numRows) {
 	db->ComputeEssentials();
 	return db;
 }
-
-#endif // BLOCK_DATAGEN

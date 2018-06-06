@@ -1,5 +1,3 @@
-#ifdef BLOCK_CLASSIFIER
-
 #include <float.h>
 
 #include "../../global.h"
@@ -824,5 +822,3 @@ void Classifier::WriteConfusionFile(const string &filename, uint32 **confusion) 
 	fclose(fp);
 	delete[] sums;
 }
-
-#endif // BLOCK_CLASSIFIER

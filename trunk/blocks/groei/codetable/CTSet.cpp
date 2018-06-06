@@ -2,6 +2,7 @@
 // Created by Jaspreet Singh on 19/04/2018.
 //
 
+#include "../../../bass/db/Database.h"
 #include "../../krimp/codetable/CodeTable.h"
 
 using namespace std;
@@ -116,6 +117,7 @@ void CTSet::PrintStats() {
         printf(" * Result:\t\t(ct%d, %da,%du,%" I64d ",%.0lf,%.0lf,%.0lf)\n", count, stats.alphItemsUsed,
                stats.numSetsUsed, stats.usgCountSum, stats.encDbSize, stats.encCTSize, stats.encSize);
     }
+    printf("\n\n");
 }
 
 ctVec *CTSet::GetCodeTables() {
@@ -210,4 +212,151 @@ bool CTSet::ContainsCodeTable(CodeTable *ct) {
 
     }
     return false;
+}
+
+void CTSet::Dissimilarity(Database *db) {
+    printf("\n\n* Dissimilarity:\n");
+    Database *db1 = db;
+    Database *db2 = db;
+
+    uint32 ii = 0;
+    uint32 jj = 0;
+    ctVec::iterator i;
+    ctVec::iterator j;
+
+    double sum = 0;
+    uint32 cnt = 0;
+
+    for(i = codeTables->begin(); i != codeTables->end(); ++i) {
+        CodeTable *ct1 = *i;
+        ii++;
+        jj = ii;
+        for (j = i+1; j != codeTables->end(); ++j) {
+            CodeTable *ct2 = *j;
+            jj++;
+
+            double db1ct1 = 0, db1ct2 = 0;
+            ItemSet **db1rows = db1->GetRows();
+            uint32 db1numRows = db1->GetNumRows();
+            for (uint32 k = 0; k < db1numRows; k++) {
+                db1ct1 += ct1->CalcTransactionCodeLength(db1rows[k]) * db1rows[k]->GetSupport();
+                db1ct2 += ct2->CalcTransactionCodeLength(db1rows[k]) * db1rows[k]->GetSupport();
+            }
+
+            double db2ct1 = 0, db2ct2 = 0;
+            ItemSet **db2rows = db2->GetRows();
+            uint32 db2numRows = db2->GetNumRows();
+            for (uint32 l = 0; l < db2numRows; l++) {
+                db2ct1 += ct1->CalcTransactionCodeLength(db2rows[l]) * db2rows[l]->GetSupport();
+                db2ct2 += ct2->CalcTransactionCodeLength(db2rows[l]) * db2rows[l]->GetSupport();
+            }
+
+            double dissimilarity = max((db1ct2 - db1ct1) / db1ct1, (db2ct1 - db2ct2) / db2ct2);
+            printf("** Dissimilarity(ct%u, ct%u) = %lf\n", ii, jj, dissimilarity);
+            sum += dissimilarity;
+            cnt++;
+        }
+    }
+
+    printf("** AVG Dissimilarity = %lf\n", sum/cnt);
+}
+
+void CTSet::CalcProbs(Database *db) {
+    if(encLengths == nullptr) {
+        CalcEncLengths(db);
+    }
+    uint32 numRows = db->GetNumRows();
+    uint64 numTables = codeTables->size();
+    probs = new double*[numRows];
+    for(uint32 i = 0; i < numRows; i++) {
+        probs[i] = new double[numTables];
+        double sum = 0;
+        for(uint64 j = 0; j < numTables; j++) {
+            sum += pow(2, -encLengths[i][j]);
+        }
+        for(uint64 j = 0; j < numTables; j++) {
+            probs[i][j] = pow(2, -encLengths[i][j])/sum;
+        }
+    }
+
+}
+
+void CTSet::CalcEncLengths(Database *db) {
+    uint32 numRows = db->GetNumRows();
+    uint64 numTables = codeTables->size();
+    encLengths = new double*[numRows];
+    for(uint32 i = 0; i < numRows; i++) {
+        encLengths[i] = new double[numTables];
+        for(uint64 j = 0; j < numTables; j++) {
+            encLengths[i][j] = (*(codeTables->begin() + j))->CalcTransactionCodeLength(db->GetRow(i));
+        }
+    }
+}
+
+void CTSet::CalcEntropy(Database *db) {
+    if(probs == nullptr) {
+        CalcProbs(db);
+    }
+    uint64 numTables = codeTables->size();
+    uint32 numRows = db->GetNumRows();
+    entropies = new double[numTables];
+    for(uint64 i = 0; i < numTables; i++) {
+        double entropy = 0;
+
+        for(uint32 j = 0; j < numRows; j++) {
+            entropy += probs[j][i]*log2(probs[j][i]);
+        }
+        entropies[i] = -entropy/((double) numRows);
+    }
+
+    double sum = 0;
+    for(uint64 i = 0; i < numTables; i++) {
+        sum += entropies[i];
+    }
+    totalEntropy = sum/((double) GetNumTables());
+}
+
+
+
+double *CTSet::CalcProbs(double *encLengths) {
+    uint64 numTables = codeTables->size();
+    auto* probas = new double[numTables];
+    double sum = 0;
+    for(uint64 i = 0; i < numTables; i++) {
+        sum += pow(2, -encLengths[i]);
+    }
+    for(uint64 j = 0; j < numTables; j++) {
+        probas[j] = pow(2, -encLengths[j])/sum;
+    }
+    return probas;
+}
+
+double *CTSet::CalcEncLengths(ItemSet *is) {
+    uint64 numTables = codeTables->size();
+    auto *encoLengths = new double[numTables];
+    for(uint32 i = 0; i < numTables; i++) {
+        encoLengths[i] = (*(codeTables->begin() + i))->CalcTransactionCodeLength(is);
+    }
+    return encoLengths;
+}
+
+double *CTSet::SummarizeProbs(Database *db) {
+    uint32 numRows = db->GetNumRows();
+    uint64 numTables = codeTables->size();
+    auto *summary = new double[numTables];
+
+    double allSum = 0;
+    for(uint32 i = 0; i < numTables; i++) {
+        double sum = 0;
+        for(uint64 j = 0; j < numRows; j++) {
+            sum += probs[j][i];
+            allSum += probs[j][i];
+        }
+        summary[i] = sum;
+    }
+    for(uint32 i = 0; i < numTables; i++) {
+        summary[i] = summary[i]/allSum;
+    }
+
+    return summary;
 }

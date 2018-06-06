@@ -178,13 +178,52 @@ CodeTable *Groei::DoeJeDing(const uint64 candidateOffset, const uint32 startSup)
     printf(" * Time:    \t\tCompressing the database took %f seconds.\t\t\n", timeCompression);
 
     candidates->PrintStats();
+    candidates->CalcEncLengths(mCT->GetDatabase());
+    candidates->CalcProbs(mCT->GetDatabase());
+    candidates->CalcEntropy(mCT->GetDatabase());
+
+    uint64 numCt = candidates->GetNumTables();
+
+    double *entropies = candidates->GetEntropies();
+    printf(" * AVG Entropy: %lf\n", candidates->GetTotalEntropy());
+    for(uint64 i = 0; i < numCt; i++) {
+        printf(" * \tEntropy CT%llu: %lf\n", i+1, entropies[i]);
+    }
+
+    double **probs = candidates->GetProbs();
+    Database *db = mCT->GetDatabase();
+    uint64 numRows = db->GetNumRows();
+    printf("\n\n * Probabilities:\n");
+    for(uint64 i = 0; i < numRows; i++) {
+        printf(" * itemset %llu: ", i+1);
+        for(uint64 j = 0; j < numCt; j ++) {
+            printf(" CT%llu: %lf,", j+1, probs[i][j]);
+        }
+        printf("\n");
+    }
+
+    double *summaryProbs = candidates->SummarizeProbs(db);
+    printf("\n\n * SUMMARY probs (CDF):");
+    for(uint64 j = 0; j < numCt; j++) {
+        printf(" CT%llu: %lf,", j+1, summaryProbs[j]);
+    }
+    printf("\n");
+
+    double **encLengths = candidates->GetEncLengths();
+    printf("\n\n * Encoded Lengths:\n");
+    for(uint64 i = 0; i < numRows; i++) {
+        printf(" * itemset %llu: ", i+1);
+        for(uint64 j = 0; j < numCt; j++) {
+            printf(" CT%llu: %lf,", j+1, encLengths[i][j]);
+        }
+        printf("\n");
+    }
 
     CloseCTLogFile();
     CloseReportFile();
     CloseLogFile();
 
     mCT->EndOfKrimp();
-
 
     return mCT;
 }

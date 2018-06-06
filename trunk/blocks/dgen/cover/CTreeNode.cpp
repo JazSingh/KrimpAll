@@ -1,5 +1,3 @@
-#if defined(BLOCK_DATAGEN) || defined (BLOCK_CLASSIFIER)
-
 #include "../../../global.h"
 
 #include <RandomUtils.h>
@@ -204,5 +202,3 @@ void CTreeNode::Print(FILE *fp, uint32 indent) {
 	//if(cur==0)
 	//	fprintf(fp, "\n");
 }
-
-#endif // BLOCK_DATAGEN
