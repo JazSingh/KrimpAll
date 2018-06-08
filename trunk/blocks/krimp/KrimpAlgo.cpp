@@ -427,12 +427,12 @@ void KrimpAlgo::ProgressToDisk(CodeTable *ct, const uint32 curSup, const uint32 
 
 	if(writeCodetable) { // TODO
 		CTSet *cts;
-		if(ct->GetCodeTableSet() == nullptr) {
-			cts = new CTSet(1);
-			cts->Add(ct);
-		} else {
+		//if(ct->GetCodeTableSet() == nullptr) {
+		//	cts = new CTSet(1);
+		//	cts->Add(ct);
+		//} else {
 			cts = ct->GetCodeTableSet();
-		}
+		//}
 		cts->ResetIterator();
 		uint64 i = 0;
 		while (!cts->IsIteratorEnd()) {
