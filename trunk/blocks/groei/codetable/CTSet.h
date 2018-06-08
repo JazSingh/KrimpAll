@@ -96,6 +96,14 @@ public:
 
     void UpdateUsageCountSums(uint32 delta);
 
+    double BerekenAfstandTussen(Database *db1, Database *db2, CodeTable *ct1, CodeTable *ct2);
+
+    void PushBack(CodeTable *codeTable);
+
+    void DissimilarityFile(Database *db, FILE *file);
+
+    void PrintStatsFile(FILE *pFILE);
+
 protected:
 
 private:
@@ -110,10 +118,6 @@ private:
     double **encLengths;
     double *entropies;
     double totalEntropy;
-
-    double BerekenAfstandTussen(Database *db1, Database *db2, CodeTable *ct1, CodeTable *ct2);
-
-    void PushBack(CodeTable *codeTable);
 };
 
 

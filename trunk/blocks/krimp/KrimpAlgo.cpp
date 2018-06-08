@@ -424,14 +424,13 @@ void KrimpAlgo::ProgressToDisk(CodeTable *ct, const uint32 curSup, const uint32 
 		fprintf(mReportFile, "%d;%d;%" I64d ";%d;%d;%d;%" I64d ";%.0f;%.0f;%.0f;%d;%d\n", curSup, curLength, numCands, stats.alphItemsUsed, stats.numSetsUsed, mCT->GetCurNumSets(), stats.usgCountSum, stats.encDbSize, stats.encCTSize, stats.encSize, time(NULL) - mStartTime, SystemUtils::GetProcessMemUsage());
 		fflush(mReportFile);
 	}
-
-	if(writeCodetable) { // TODO
+	if(writeCodetable) {
 		CTSet *cts;
+		cts = ct->GetCodeTableSet();
 		//if(ct->GetCodeTableSet() == nullptr) {
 		//	cts = new CTSet(1);
 		//	cts->Add(ct);
 		//} else {
-			cts = ct->GetCodeTableSet();
 		//}
 		cts->ResetIterator();
 		uint64 i = 0;
@@ -456,8 +455,123 @@ void KrimpAlgo::ProgressToDisk(CodeTable *ct, const uint32 curSup, const uint32 
 				fclose(fp);
 			}
 		}
+
+		string s = mOutDir;
+		s.append("/codetablesStats-");
+		s.append(mTag);
+		s.append(".txt");
+		FILE *codetablesStats = fopen(s.c_str(), "a");
+
+
+		cts->PrintStatsFile(codetablesStats);
+		fclose(codetablesStats);
+
+		cts->CalcEncLengths(mCT->GetDatabase());
+		cts->CalcProbs(mCT->GetDatabase());
+		cts->CalcEntropy(mCT->GetDatabase());
+
+		uint64 numCt = cts->GetNumTables();
+
+		s = mOutDir;
+		s.append("/entropy-");
+		s.append(mTag);
+		s.append(".txt");
+		FILE *entropyFile = fopen(s.c_str(), "a");
+
+		double *entropies = cts->GetEntropies();
+		fprintf(entropyFile, " * AVG Entropy: %lf\n", cts->GetTotalEntropy());
+		fflush(entropyFile);
+		for (uint64 i = 0; i < numCt; i++) {
+			fprintf(entropyFile, " * \tEntropy CT%llu: %lf\n", i + 1, entropies[i]);
+			fflush(entropyFile);
+		}
+
+		fclose(entropyFile);
+
+		s = mOutDir;
+		s.append("/probs-");
+		s.append(mTag);
+		s.append(".csv");
+		FILE *probsFile = fopen(s.c_str(), "a");
+
+		double **probs = cts->GetProbs();
+		Database *db = mCT->GetDatabase();
+		uint64 numRows = db->GetNumRows();
+
+		for (uint64 j = 0; j < numCt; j++) {
+			if (j == numCt - 1) {
+				fprintf(probsFile, "CT%llu\n", j + 1);
+			} else {
+				fprintf(probsFile, "CT%llu;", j + 1);
+			}
+		}
+
+		for (uint64 i = 0; i < numRows; i++) {
+			printf(" * itemset %llu: ", i + 1);
+			for (uint64 j = 0; j < numCt; j++) {
+				if (j == numCt - 1) {
+					fprintf(probsFile, "%lf\n", probs[i][j]);
+				} else {
+					fprintf(probsFile, "%lf;", probs[i][j]);
+				}
+			}
+			fflush(probsFile);
+		}
+		fprintf(probsFile, "\n");
+		fflush(probsFile);
+		double *summaryProbs = cts->SummarizeProbs(db);
+		for (uint64 j = 0; j < numCt; j++) {
+			if (j == numCt - 1) {
+				fprintf(probsFile, "%lf\n", summaryProbs[j]);
+			} else {
+				fprintf(probsFile, "%lf;", summaryProbs[j]);
+			}
+			fflush(probsFile);
+		}
+		fprintf(probsFile, "\n");
+		fflush(probsFile);
+		fclose(probsFile);
+
+		s = mOutDir;
+		s.append("/encLength-");
+		s.append(mTag);
+		s.append(".csv");
+		FILE *encFile = fopen(s.c_str(), "a");
+
+		double **encLengths = cts->GetEncLengths();
+
+		for (uint64 j = 0; j < numCt; j++) {
+			if (j == numCt - 1) {
+				fprintf(encFile, "CT%llu\n", j + 1);
+			} else {
+				fprintf(encFile, "CT%llu;", j + 1);
+			}
+		}
+
+		for (uint64 i = 0; i < numRows; i++) {
+			for (uint64 j = 0; j < numCt; j++) {
+				if (j == numCt - 1) {
+					fprintf(encFile, "%lf\n", encLengths[i][j]);
+				} else {
+					fprintf(encFile, "%lf;", encLengths[i][j]);
+				}
+			}
+			fflush(encFile);
+		}
+		fclose(encFile);
+
+		s = mOutDir;
+		s.append("/dissimilarity-");
+		s.append(mTag);
+		s.append(".txt");
+		FILE *dissimilarityFile = fopen(s.c_str(), "a");
+
+		cts->DissimilarityFile(db, dissimilarityFile);
+
+		fclose(dissimilarityFile);
 	}
 }
+
 void KrimpAlgo::OpenCTLogFile() {
 	string ctLogFilename = mOutDir;
 	ctLogFilename.append("/ct-");

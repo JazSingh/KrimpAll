@@ -288,6 +288,55 @@ void CTSet::Dissimilarity(Database *db) {
     printf("** AVG Dissimilarity = %lf\n", sum/cnt);
 }
 
+void CTSet::DissimilarityFile(Database *db, FILE *file) {
+    printf("\n\n* Dissimilarity:\n");
+    Database *db1 = db;
+    Database *db2 = db;
+
+    uint32 ii = 0;
+    uint32 jj = 0;
+    ctVec::iterator i;
+    ctVec::iterator j;
+
+    double sum = 0;
+    uint32 cnt = 0;
+
+    for(i = codeTables->begin(); i != codeTables->end(); ++i) {
+        CodeTable *ct1 = *i;
+        ii++;
+        jj = ii;
+        for (j = i+1; j != codeTables->end(); ++j) {
+            CodeTable *ct2 = *j;
+            jj++;
+
+            double db1ct1 = 0, db1ct2 = 0;
+            ItemSet **db1rows = db1->GetRows();
+            uint32 db1numRows = db1->GetNumRows();
+            for (uint32 k = 0; k < db1numRows; k++) {
+                db1ct1 += ct1->CalcTransactionCodeLength(db1rows[k]) * db1rows[k]->GetSupport();
+                db1ct2 += ct2->CalcTransactionCodeLength(db1rows[k]) * db1rows[k]->GetSupport();
+            }
+
+            double db2ct1 = 0, db2ct2 = 0;
+            ItemSet **db2rows = db2->GetRows();
+            uint32 db2numRows = db2->GetNumRows();
+            for (uint32 l = 0; l < db2numRows; l++) {
+                db2ct1 += ct1->CalcTransactionCodeLength(db2rows[l]) * db2rows[l]->GetSupport();
+                db2ct2 += ct2->CalcTransactionCodeLength(db2rows[l]) * db2rows[l]->GetSupport();
+            }
+
+            double dissimilarity = max((db1ct2 - db1ct1) / db1ct1, (db2ct1 - db2ct2) / db2ct2);
+            fprintf(file,"** Dissimilarity(ct%u, ct%u) = %lf\n", ii, jj, dissimilarity);
+            fflush(file);
+            sum += dissimilarity;
+            cnt++;
+        }
+    }
+
+    fprintf(file,"** AVG Dissimilarity = %lf\n", sum/cnt);
+    fflush(file);
+}
+
 void CTSet::CalcProbs(Database *db) {
     if(encLengths == nullptr) {
         CalcEncLengths(db);
@@ -439,5 +488,18 @@ void CTSet::SetAlphabetCount(uint32 item, uint32 count) {
 void CTSet::UpdateUsageCountSums(uint32 delta) {
     for (auto c : *codeTables) {
         c->GetCurStats().usgCountSum += delta;
+    }
+}
+
+void CTSet::PrintStatsFile(FILE *pFILE) {
+    ctVec::iterator i;
+    int count = 0;
+    for (i = codeTables->begin(); i != codeTables->end(); ++i) {
+        count++;
+        CodeTable *ct = *i;
+        CoverStats stats = ct->GetCurStats();
+        fprintf(pFILE, " * Result:\t\t(ct%d, %da,%du,%" I64d ",%.0lf,%.0lf,%.0lf)\n", count, stats.alphItemsUsed,
+               stats.numSetsUsed, stats.usgCountSum, stats.encDbSize, stats.encCTSize, stats.encSize);
+        fflush(pFILE);
     }
 }

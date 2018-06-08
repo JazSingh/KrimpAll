@@ -74,7 +74,7 @@ CodeTable *GroeiNoS::DoeJeDing(const uint64 candidateOffset, const uint32 startS
            stats.usgCountSum, stats.encDbSize, stats.encCTSize, stats.encSize);
 
     if (mWriteProgressToDisk == true) {
-        ProgressToDisk(mCT, 0, 0, numIsc, true, true);
+        ProgressToDisk(mCT, 0, 0, numIsc, false, true);
     }
 
     while (iteration <= *maxComplexity) {

@@ -74,6 +74,10 @@ CodeTable *GroeiSlimNoS::DoeJeDing(const uint64 candidateOffset, const uint32 st
 
     ItemSet *m;
 
+    if (mWriteProgressToDisk == true) {
+        ProgressToDisk(mCT, 0, 0, 0, false, true);
+    }
+
     while (iteration <= *maxComplexity) {
         CTSet *best_prev = candidates;
         CoverStats &prevWorstStats = best_prev->GetWorstStats();
