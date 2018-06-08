@@ -1,4 +1,5 @@
 #include <float.h>
+#include "../groei/codetable/CTSet.h"
 
 #include "../../global.h"
 
@@ -62,8 +63,8 @@ void Classifier::Classify() {
 	// Init some variables
 	string **strClasses = new string *[mNumClasses];
 	ClassedDatabase *testDb, *trainDb;
-	CodeTable **CTs = new CodeTable *[mNumClasses];
-	CodeTable **CTsT = new CodeTable *[mNumClasses];
+	CTSet **CTs = new CTSet *[mNumClasses];
+    CTSet **CTsT = new CTSet *[mNumClasses];
 	uint32 *numCTs = new uint32[mNumClasses];
 	CTFileInfo ***ctFiles = new CTFileInfo **[mNumClasses];
 	uint32 **confusion = new uint32 *[mNumClasses];
@@ -238,20 +239,33 @@ void Classifier::Classify() {
 					curSup = reportVal;
 				delete CTs[c];
 				delete CTsT[c];
-				CTs[c] = CodeTable::CreateCTForClassification("coverfull", dataType);
-				CTsT[c] = CodeTable::CreateCTForClassification("coverfull", dataType);
+
+				string trainDir = foldDir + string("train") + *strClasses[c] + string("/");
+				uint64 numCt = 0;
+				directory_iterator itr(trainDir, "*.ct");
+
+				vector<string> *tables = new vector<string>();
+				while(itr.next()) {
+					string fffffile = itr.filename();
+					tables->push_back(fffffile);
+					numCt++;
+				}
+
+
+				CTs[c] = CTSet::CreateCTForClassification("coverfull", dataType, numCt);
+				CTsT[c] = CTSet::CreateCTForClassification("coverfull", dataType, numCt);
 
 				// StdLens don't matter in classification!
-				CTs[c]->UseThisStuff(testDb, testDb->GetDataType(), InitCTEmpty);
-				CTsT[c]->UseThisStuff(trainDb, trainDb->GetDataType(), InitCTEmpty);
+				CTs[c]->UseThisStuff(testDb, testDb->GetDataType());
+				CTsT[c]->UseThisStuff(trainDb, trainDb->GetDataType());
 				{
 					uint8 levelBak = Bass::GetOutputLevel(); Bass::SetOutputLevel(0);
 					bool found = false;
 					for(uint32 i=0; i<numCTs[c]; i++)
 						if(ctFiles[c][i]->minsup >= curSup) {
 							filename = foldDir + string("train") + *strClasses[c] + string("/") + ctFiles[c][i]->filename;
-							CTs[c]->ReadFromDisk(filename, false);
-							CTsT[c]->ReadFromDisk(filename, false);
+							CTs[c]->ReadFromDisk(trainDir, tables, false);
+							CTsT[c]->ReadFromDisk(trainDir, tables, false);
 							found = true;
 							break;
 						}
@@ -260,21 +274,21 @@ void Classifier::Classify() {
 					Bass::SetOutputLevel(levelBak);
 				}
 
-				if(mSanitize) {
-					islist *pruneList = CTs[c]->GetSanitizePruneList();
-					islist::iterator iter;
-					for(iter = pruneList->begin(); iter != pruneList->end(); ++iter) {
-						ItemSet *is = (ItemSet*)(*iter);
-						CTs[c]->Del(is, true, false); // zap immediately
-					}
-					delete pruneList;
-					pruneList = CTsT[c]->GetSanitizePruneList();
-					for(iter = pruneList->begin(); iter != pruneList->end(); ++iter) {
-						ItemSet *is = (ItemSet*)(*iter);
-						CTsT[c]->Del(is, true, false); // zap immediately
-					}
-					delete pruneList;
-				}
+//				if(mSanitize) {
+//					islist *pruneList = CTs[c]->GetSanitizePruneList();
+//					islist::iterator iter;
+//					for(iter = pruneList->begin(); iter != pruneList->end(); ++iter) {
+//						ItemSet *is = (ItemSet*)(*iter);
+//						CTs[c]->Del(is, true, false); // zap immediately
+//					}
+//					delete pruneList;
+//					pruneList = CTsT[c]->GetSanitizePruneList();
+//					for(iter = pruneList->begin(); iter != pruneList->end(); ++iter) {
+//						ItemSet *is = (ItemSet*)(*iter);
+//						CTsT[c]->Del(is, true, false); // zap immediately
+//					}
+//					delete pruneList;
+//				}
 
 				// Apply Laplace correction
 				CTs[c]->AddOneToEachUsageCount();
@@ -285,8 +299,8 @@ void Classifier::Classify() {
 					CTs[c]->SetAlphabetCount(mClasses[j], 0);
 					CTsT[c]->SetAlphabetCount(mClasses[j], 0);
 				}
-				CTs[c]->GetCurStats().usgCountSum -= mNumClasses;
-				CTsT[c]->GetCurStats().usgCountSum -= mNumClasses;
+				CTs[c]->UpdateUsageCountSums(-mNumClasses);
+				CTsT[c]->UpdateUsageCountSums(-mNumClasses);
 
 				// Init score map for current reportVal
 				good[f-1][c]->insert(supScoreMapEntry(reportVal, 0));
@@ -373,7 +387,7 @@ void Classifier::Classify() {
 	delete combinedMask;
 }
  
-void Classifier::DoClassification(ClassedDatabase *cdb, CodeTable **CTs, uint32 reportVal, supScoreMap **good, supScoreMap **bad, uint32 **confusion) {
+void Classifier::DoClassification(ClassedDatabase *cdb, CTSet **CTs, uint32 reportVal, supScoreMap **good, supScoreMap **bad, uint32 **confusion) {
 	uint32 numRows = cdb->GetNumRows();
 	ItemSet *is;
 	uint32 bestIdx, actualIdx, numBestIds;
@@ -391,7 +405,7 @@ void Classifier::DoClassification(ClassedDatabase *cdb, CodeTable **CTs, uint32 
 		}
 		bestVal = DOUBLE_MAX_VALUE;
 		for(uint32 c=0; c<mNumClasses; c++) {
-			codeLens[c] = CTs[c]->CalcTransactionCodeLength(is);
+			codeLens[c] = CTs[c]->GetAvgEncLength(is);
 #if defined (_WINDOWS)
 			if(!_finite(codeLens[c]))
 #elif (defined (__unix__) || (defined (__APPLE__) && defined (__MACH__)))
@@ -431,7 +445,7 @@ void Classifier::DoClassification(ClassedDatabase *cdb, CodeTable **CTs, uint32 
 	delete[] bestIds;
 }
 
-void Classifier::DoMajorityVoteClassification(ClassedDatabase *cdb, CodeTable **CTs, uint32 reportVal, supScoreMap **good, supScoreMap **bad, uint32 **confusion) {
+void Classifier::DoMajorityVoteClassification(ClassedDatabase *cdb, CTSet **CTs, uint32 reportVal, supScoreMap **good, supScoreMap **bad, uint32 **confusion) {
 	double *codeLens = new double[mNumClasses];
 	uint32 *votes = new uint32[mNumClasses];
 	uint32 *bestIds = new uint32[mNumClasses];
@@ -498,7 +512,7 @@ void Classifier::DoMajorityVoteClassification(ClassedDatabase *cdb, CodeTable **
 				break;
 			}
 		for(uint32 c=0; c<mNumClasses; c++) {
-			codeLens[c] = CTs[c]->CalcTransactionCodeLength(is);
+			codeLens[c] = CTs[c]->GetAvgEncLength(is);
 #if defined (_WINDOWS)
 			if(!_finite(codeLens[c]))
 #elif (defined (__unix__) || (defined (__APPLE__) && defined (__MACH__)))

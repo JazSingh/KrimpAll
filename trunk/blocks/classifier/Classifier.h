@@ -7,6 +7,7 @@ class Config;
 class Database;
 class CodeTable;
 class DbFile;
+class CTSet;
 
 class Classifier {
 public:
@@ -16,8 +17,8 @@ public:
 	void Classify();
 
 protected:
-	void DoClassification(ClassedDatabase *cdb, CodeTable **CTs, uint32 reportVal, supScoreMap **good, supScoreMap **bad, uint32 **confusion);
-	void DoMajorityVoteClassification(ClassedDatabase *cdb, CodeTable **CTs, uint32 reportVal, supScoreMap **good, supScoreMap **bad, uint32 **confusion);
+	void DoClassification(ClassedDatabase *cdb, CTSet **CTs, uint32 reportVal, supScoreMap **good, supScoreMap **bad, uint32 **confusion);
+	void DoMajorityVoteClassification(ClassedDatabase *cdb, CTSet **CTs, uint32 reportVal, supScoreMap **good, supScoreMap **bad, uint32 **confusion);
 
 	void WriteTopscoreFile(const string &filename, supScoreMap ***goodT, supScoreMap ***badT, supScoreMap ***good, supScoreMap ***bad, bool percentage);
 

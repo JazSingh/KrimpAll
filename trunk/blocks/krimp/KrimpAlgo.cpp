@@ -425,22 +425,36 @@ void KrimpAlgo::ProgressToDisk(CodeTable *ct, const uint32 curSup, const uint32 
 		fflush(mReportFile);
 	}
 
-	if(writeCodetable) {
-		char buf[255];
-		if(!writeStats) {
-			sprintf_s(buf, 255, "%sct-%s-%d.ct", mOutDir.c_str(),mTag.c_str(),curSup);
-		} else
-			sprintf_s(buf, 255, "%sct-%s-%d-%" I64d ".ct", mOutDir.c_str(),mTag.c_str(),curSup,numCands);
+	if(writeCodetable) { // TODO
+		CTSet *cts;
+		if(ct->GetCodeTableSet() == nullptr) {
+			cts = new CTSet(1);
+			cts->Add(ct);
+		} else {
+			cts = ct->GetCodeTableSet();
+		}
+		cts->ResetIterator();
+		uint64 i = 0;
+		while (!cts->IsIteratorEnd()) {
+			i++;
+			CodeTable *c = cts->NextCodeTable();
+			char buf[255];
+			if (!writeStats) {
+				sprintf_s(buf, 255, "%sct-%s-%d-%llu.ct", mOutDir.c_str(), mTag.c_str(), curSup, i);
+			} else
+				sprintf_s(buf, 255, "%sct-%s-%d-%" I64d "-%llu.ct", mOutDir.c_str(), mTag.c_str(), curSup, numCands, i);
 
-		string ctFilename = buf;
-		ct->WriteToDisk(ctFilename);
+			string ctFilename = buf;
+			c->WriteToDisk(ctFilename);
 
-		if(numCands == 0) { // write max.sup
-			string f = mOutDir + "/max.sup";
-			FILE *fp = fopen(f.c_str(), "w");
-			f = string(buf) + "\n";
-			fputs(f.c_str(), fp);
-			fclose(fp);
+
+			if (numCands == 0) { // write max.sup
+				string f = mOutDir + "/max_" + to_string(i) + ".sup";
+				FILE *fp = fopen(f.c_str(), "w");
+				f = string(buf) + "\n";
+				fputs(f.c_str(), fp);
+				fclose(fp);
+			}
 		}
 	}
 }

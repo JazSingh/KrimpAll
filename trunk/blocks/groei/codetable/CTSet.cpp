@@ -32,6 +32,12 @@ void CTSet::Add(CodeTable *codeTable) {
     ResetIterator();
 }
 
+void CTSet::PushBack(CodeTable *codeTable) {
+    codeTables->push_back(codeTable);
+    ResetIterator();
+}
+
+
 void CTSet::PopBack() {
     CodeTable *del = codeTables->back();
     delete del;
@@ -187,32 +193,53 @@ CTSet::~CTSet() {
 }
 
 bool CTSet::ContainsCodeTable(CodeTable *ct) {
-    islist *ctList = ct->GetItemSetList();
+    double epsilon = std::numeric_limits<double>::epsilon();
     for (auto c : *codeTables) {
-        islist *cList = c->GetItemSetList();
-
-        if(cList->size() != ctList->size()) {
+        if(c->GetCurSize()            != ct->GetCurSize() || // equal L(DB, CT)?
+           c->GetCurStats().encCTSize != ct->GetCurStats().encCTSize || // equal L(CT)?
+           c->GetCurStats().encDbSize != ct->GetCurStats().encDbSize || // equal L(DB|CT)?
+           c->GetCurNumSets()         != ct->GetCurNumSets()) { // equal number of sets?
             continue;
         }
 
-        auto iC = cList->begin();
-        bool allSame = true;
-        for(auto a: *ctList) {
-            ItemSet *b = *(iC);
-            iC++;
-            if(!a->Equals(b)) {
-                allSame = false;
-                break;
-            }
-        }
-
-        if(allSame) {
+        if(BerekenAfstandTussen(c->GetDatabase(), ct->GetDatabase(), c, ct) < epsilon) {
             return true;
         }
-
     }
     return false;
 }
+
+double CTSet::BerekenAfstandTussen(Database *db1, Database *db2, CodeTable *ct1, CodeTable *ct2) {
+
+    // Stap 1 - Prepare the Codetables
+    // gefopt! dat moet je zelf maar van te voren doen!
+    //ct1->AddOneToEachCount();
+    //ct2->AddOneToEachCount();
+
+    // Stap 2 - DB1
+    double db1ct1 = 0, db1ct2 = 0;
+    ItemSet **db1rows = db1->GetRows();
+    uint32 db1numRows = db1->GetNumRows();
+    for(uint32 i=0; i<db1numRows; i++) {
+        db1ct1 += ct1->CalcTransactionCodeLength(db1rows[i]) * db1rows[i]->GetSupport();
+        db1ct2 += ct2->CalcTransactionCodeLength(db1rows[i]) * db1rows[i]->GetSupport();
+    }
+
+    // Stap 3 - DB2
+    double db2ct1 = 0, db2ct2 = 0;
+    ItemSet **db2rows = db2->GetRows();
+    uint32 db2numRows = db2->GetNumRows();
+    for(uint32 i=0; i<db2numRows; i++) {
+        db2ct1 += ct1->CalcTransactionCodeLength(db2rows[i]) * db2rows[i]->GetSupport();
+        db2ct2 += ct2->CalcTransactionCodeLength(db2rows[i]) * db2rows[i]->GetSupport();
+    }
+
+    // Stap 4 - Uitrekenen die boel
+    double dissimilarity = max((db1ct2-db1ct1)/db1ct1, (db2ct1-db2ct2)/db2ct2);
+
+    return dissimilarity;
+}
+
 
 void CTSet::Dissimilarity(Database *db) {
     printf("\n\n* Dissimilarity:\n");
@@ -359,4 +386,58 @@ double *CTSet::SummarizeProbs(Database *db) {
     }
 
     return summary;
+}
+
+double CTSet::GetAvgEncLength(ItemSet *is) {
+    double *encLengths = CalcEncLengths(is);
+    double *probs = CalcProbs(encLengths);
+    double wAvg = 0;
+    uint64 numTables = codeTables->size();
+    for(uint64 i = 0; i < numTables; i++) {
+        wAvg += (probs[i] * encLengths[i]);
+    }
+    return wAvg;
+}
+
+void CTSet::ReadFromDisk(const string &folder, vector<string> *tables, const bool needfreqs) {
+    uint64 i = 0;
+    for (auto c : *codeTables) {
+        string path = folder;
+        string file  = *(tables->begin()+i);
+        string all = path + file;
+        c->ReadFromDisk(all , needfreqs);
+        i++;
+    }
+}
+
+CTSet *CTSet::CreateCTForClassification(const string &name, ItemSetType dataType, uint64 numTables) {
+    CTSet *set = new CTSet(numTables);
+    for(uint64 i = 0; i < numTables; i++) {
+        set->PushBack(CodeTable::CreateCTForClassification("coverfull", dataType));
+    }
+    return set;
+}
+
+void CTSet::UseThisStuff(Database *db, ItemSetType type, uint32 maxCTElemLength, uint32 toMinSup) {
+    for (auto c : *codeTables) {
+        c->UseThisStuff(db, type, static_cast<CTInitType>(0), maxCTElemLength, toMinSup);
+    }
+}
+
+void CTSet::AddOneToEachUsageCount() {
+    for (auto c : *codeTables) {
+        c->AddOneToEachUsageCount();
+    }
+}
+
+void CTSet::SetAlphabetCount(uint32 item, uint32 count) {
+    for (auto c : *codeTables) {
+        c->SetAlphabetCount(item, count);
+    }
+}
+
+void CTSet::UpdateUsageCountSums(uint32 delta) {
+    for (auto c : *codeTables) {
+        c->GetCurStats().usgCountSum += delta;
+    }
 }

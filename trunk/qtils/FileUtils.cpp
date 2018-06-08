@@ -1,20 +1,13 @@
 #include "qlobal.h"
 
-#if defined (_MSC_VER)
-# include <windows.h>
-# include <shlobj.h>
-#elif defined (__GNUC__)
-# if defined (__APPLE__) && defined (__MACH__)
-#  include <sys/uio.h>
-# else
-#  include <sys/io.h>   // For access().
-#  include <sys/sendfile.h>
-# endif
+
 # include <sys/types.h>  // For stat().
 # include <sys/stat.h>   // For stat().
 # include <fcntl.h>
-# include <unistd.h> 
-#endif
+# include <unistd.h>
+# include <sys/uio.h>
+#include <sys/socket.h>
+#include <copyfile.h>
 
 #include "FileUtils.h"
 
@@ -152,9 +145,6 @@ bool FileUtils::RemoveFile(const string &path) {
 #endif
 }
 bool FileUtils::FileMove(const string &fromPath, const string &toPath) {
-#ifdef WIN32
-	return MoveFileA(fromPath.c_str(), toPath.c_str()) ? true : false;
-#elif defined (__GNUC__) && defined (__unix__)
 	if (rename(fromPath.c_str(), toPath.c_str()))
 		if (errno == EXDEV) { // EXDEV	oldpath and newpath are not on the same mounted filesystem. (Linux permits a filesystem to be mounted at multiple points, but rename(2) does not work across different mount points, even if the same filesystem is mounted on both.)
 			// See: Exploring The sendfile System Call LG #91
@@ -178,7 +168,7 @@ bool FileUtils::FileMove(const string &fromPath, const string &toPath) {
 				throw string("Unable to open '" + toPath + "': " + string(strerror(errno)) + "\n");
 
 			/* copy file using sendfile */
-			rc = sendfile (dest, src, &offset, stat_buf.st_size);
+			rc = copyfile (fromPath.data(), toPath.data(), NULL, COPYFILE_ALL);
 			if (rc == -1)
 				throw string("Error from sendfile: " + string(strerror(errno)) + "\n");
 			if (rc != stat_buf.st_size) {
@@ -201,7 +191,6 @@ bool FileUtils::FileMove(const string &fromPath, const string &toPath) {
 			throw string("Error renaming file: " + string(strerror(errno)) + "\n");
 	else
 	    return true;
-#endif
 }
 
 

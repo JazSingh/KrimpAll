@@ -7,9 +7,9 @@
 
 class CodeTable;
 
-struct CoverStats;
-
 #include "../../krimp/codetable/CodeTable.h"
+
+struct CoverStats;
 
 typedef std::vector<CodeTable *> ctVec;
 
@@ -82,6 +82,20 @@ public:
 
     double GetTotalEntropy() {return totalEntropy;}
 
+    double GetAvgEncLength(ItemSet *is);
+
+    virtual void ReadFromDisk(const string &filename, vector<string> *tables, const bool needfreqs);
+
+    static CTSet* CreateCTForClassification(const string &name, ItemSetType dataType, uint64 numTables);
+
+    void UseThisStuff(Database *db, ItemSetType type, uint32 maxCTElemLength=0, uint32 toMinSup = 0);
+
+    void AddOneToEachUsageCount();
+
+    void SetAlphabetCount(uint32 item, uint32 count);
+
+    void UpdateUsageCountSums(uint32 delta);
+
 protected:
 
 private:
@@ -96,6 +110,10 @@ private:
     double **encLengths;
     double *entropies;
     double totalEntropy;
+
+    double BerekenAfstandTussen(Database *db1, Database *db2, CodeTable *ct1, CodeTable *ct2);
+
+    void PushBack(CodeTable *codeTable);
 };
 
 

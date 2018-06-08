@@ -163,7 +163,7 @@ CodeTable *GroeiNoS::DoeJeDing(const uint64 candidateOffset, const uint32 startS
 
         mCT = candidates->GetBestTable();
         if (mWriteProgressToDisk == true) {
-            ProgressToDisk(mCT, 0, 0, numIsc, true, true);
+            ProgressToDisk(mCT, 0, 0, numIsc, false, true);
         }
         stats = mCT->GetCurStats();
         stats.numCandidates = mNumCandidates;
@@ -196,14 +196,14 @@ CodeTable *GroeiNoS::DoeJeDing(const uint64 candidateOffset, const uint32 startS
     double **probs = candidates->GetProbs();
     Database *db = mCT->GetDatabase();
     uint64 numRows = db->GetNumRows();
-    printf("\n\n * Probabilities:\n");
-    for(uint64 i = 0; i < numRows; i++) {
-        printf(" * itemset %llu: ", i+1);
-        for(uint64 j = 0; j < numCt; j ++) {
-            printf(" CT%llu: %lf,", j+1, probs[i][j]);
-        }
-        printf("\n");
-    }
+//    printf("\n\n * Probabilities:\n");
+//    for(uint64 i = 0; i < numRows; i++) {
+//        printf(" * itemset %llu: ", i+1);
+//        for(uint64 j = 0; j < numCt; j ++) {
+//            printf(" CT%llu: %lf,", j+1, probs[i][j]);
+//        }
+//        printf("\n");
+//    }
 
     double *summaryProbs = candidates->SummarizeProbs(db);
     printf("\n\n * SUMMARY probs (CDF):");
@@ -212,15 +212,17 @@ CodeTable *GroeiNoS::DoeJeDing(const uint64 candidateOffset, const uint32 startS
     }
     printf("\n");
 
-    double **encLengths = candidates->GetEncLengths();
-    printf("\n\n * Encoded Lengths:\n");
-    for(uint64 i = 0; i < numRows; i++) {
-        printf(" * itemset %llu: ", i+1);
-        for(uint64 j = 0; j < numCt; j ++) {
-            printf(" CT%llu: %lf,", j+1, encLengths[i][j]);
-        }
-        printf("\n");
-    }
+//    double **encLengths = candidates->GetEncLengths();
+//    printf("\n\n * Encoded Lengths:\n");
+//    for(uint64 i = 0; i < numRows; i++) {
+//        printf(" * itemset %llu: ", i+1);
+//        for(uint64 j = 0; j < numCt; j ++) {
+//            printf(" CT%llu: %lf,", j+1, encLengths[i][j]);
+//        }
+//        printf("\n");
+//    }
+    candidates->Dissimilarity(db);
+
 
     CloseCTLogFile();
     CloseReportFile();
@@ -228,6 +230,9 @@ CodeTable *GroeiNoS::DoeJeDing(const uint64 candidateOffset, const uint32 startS
 
     mCT->EndOfKrimp();
 
+    if (mWriteProgressToDisk == true) {
+        ProgressToDisk(mCT, 0, 0, 0, true, true);
+    }
 
     return mCT;
 }

@@ -479,7 +479,8 @@ void FicMain::MineAndWriteCodeTables(const string &path, Database *db, Config *c
 	// J! Zou mooi zijn als isc on-delete zichzelf op zou kunnen ruimen?
 	IscFileType storeIscFileType = config->KeyExists("iscStoreType") ? IscFile::ExtToType(config->Read<string>("iscStoreType")) : BinaryFicIscFileType;
 	IscFileType chunkIscFileType = config->KeyExists("iscChunkType") ? IscFile::ExtToType(config->Read<string>("iscChunkType")) : BinaryFicIscFileType;
-	ItemSetCollection *isc = FicMain::MineItemSetCollection(iscTag, db, false, true, storeIscFileType, chunkIscFileType); // TODO: If slim we don't need to mine isc!!!
+    ItemSetCollection *isc = new ItemSetCollection();
+	//ItemSetCollection *isc = FicMain::MineItemSetCollection(iscTag, db, false, true, storeIscFileType, chunkIscFileType); // TODO: If slim we don't need to mine isc!!!
 
 	if (config->Read<string>("algo").compare(0, 4, "slim") == 0) { // We don't really need a itemset collection...
 		iscTag = tmpIscTag;
@@ -489,7 +490,7 @@ void FicMain::MineAndWriteCodeTables(const string &path, Database *db, Config *c
 	string algoName = config->Read<string>("algo");
 	KrimpAlgo *algo = GroeiAlgo::CreateAlgo(algoName, db->GetDataType(), config);
 	if(algo == NULL) {
-		delete isc;
+		//delete isc;
 		throw string(__FUNCTION__) + ": Unknown algorithm: " + algoName;
 	}
 	algo->SetOutputDir(path);
@@ -513,6 +514,8 @@ void FicMain::MineAndWriteCodeTables(const string &path, Database *db, Config *c
 
 	// Put algo to work
 	CodeTable *ct = algo->DoeJeDing();
+
+	//bepaal purity
 
 	if(zapIsc) {
 		IscFile *iscFile = isc->GetIscFile();
