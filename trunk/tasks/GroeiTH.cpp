@@ -67,11 +67,12 @@ void GroeiTH::Compress(Config *config, const string tagIn) {
 
     // Determine Pruning Strategy
     string pruneStrategyStr = config->Read<string>("prunestrategy","nop");
+    string beamWidth = mConfig->Read<string>("beamWidth");
 
     string tag, timetag;
     if(tagIn.length() == 0) {
         timetag = TimeUtils::GetTimeStampString();
-        tag = iscName + "-" + algoName + "-" + pruneStrategyStr + "-" + timetag;
+        tag = iscName + "-" + algoName + "-" + pruneStrategyStr + "-" + beamWidth + "-" + timetag;
     } else {
         tag = tagIn;
         timetag = tag.substr(tag.find_last_of('-')+1,tag.length()-1-tag.find_last_of('-'));

@@ -498,7 +498,9 @@ void KrimpAlgo::ProgressToDisk(CodeTable *ct, const uint32 curSup, const uint32 
 		Database *db = mCT->GetDatabase();
 		uint64 numRows = db->GetNumRows();
 
-		for (uint64 j = 0; j < numCt; j++) {
+        fprintf(probsFile, "dbRow;");
+
+        for (uint64 j = 0; j < numCt; j++) {
 			if (j == numCt - 1) {
 				fprintf(probsFile, "CT%llu\n", j + 1);
 			} else {
@@ -507,7 +509,7 @@ void KrimpAlgo::ProgressToDisk(CodeTable *ct, const uint32 curSup, const uint32 
 		}
 
 		for (uint64 i = 0; i < numRows; i++) {
-			printf(" * itemset %llu: ", i + 1);
+            fprintf(probsFile, "%llu;", i+1);
 			for (uint64 j = 0; j < numCt; j++) {
 				if (j == numCt - 1) {
 					fprintf(probsFile, "%lf\n", probs[i][j]);
@@ -520,7 +522,8 @@ void KrimpAlgo::ProgressToDisk(CodeTable *ct, const uint32 curSup, const uint32 
 		fprintf(probsFile, "\n");
 		fflush(probsFile);
 		double *summaryProbs = cts->SummarizeProbs(db);
-		for (uint64 j = 0; j < numCt; j++) {
+        fprintf(probsFile, ";");
+        for (uint64 j = 0; j < numCt; j++) {
 			if (j == numCt - 1) {
 				fprintf(probsFile, "%lf\n", summaryProbs[j]);
 			} else {
@@ -540,7 +543,8 @@ void KrimpAlgo::ProgressToDisk(CodeTable *ct, const uint32 curSup, const uint32 
 
 		double **encLengths = cts->GetEncLengths();
 
-		for (uint64 j = 0; j < numCt; j++) {
+        fprintf(encFile, "dbRow;");
+        for (uint64 j = 0; j < numCt; j++) {
 			if (j == numCt - 1) {
 				fprintf(encFile, "CT%llu\n", j + 1);
 			} else {
@@ -549,7 +553,8 @@ void KrimpAlgo::ProgressToDisk(CodeTable *ct, const uint32 curSup, const uint32 
 		}
 
 		for (uint64 i = 0; i < numRows; i++) {
-			for (uint64 j = 0; j < numCt; j++) {
+            fprintf(encFile, "%llu;", i+1);
+            for (uint64 j = 0; j < numCt; j++) {
 				if (j == numCt - 1) {
 					fprintf(encFile, "%lf\n", encLengths[i][j]);
 				} else {

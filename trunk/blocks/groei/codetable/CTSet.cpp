@@ -195,13 +195,20 @@ CTSet::~CTSet() {
 bool CTSet::ContainsCodeTable(CodeTable *ct) {
     double epsilon = std::numeric_limits<double>::epsilon();
     for (auto c : *codeTables) {
-        if(c->GetCurSize()            != ct->GetCurSize() || // equal L(DB, CT)?
-           c->GetCurStats().encCTSize != ct->GetCurStats().encCTSize || // equal L(CT)?
-           c->GetCurStats().encDbSize != ct->GetCurStats().encDbSize || // equal L(DB|CT)?
-           c->GetCurNumSets()         != ct->GetCurNumSets()) { // equal number of sets?
-            continue;
-        }
+        //printf("* curSize:\t\t %llu =? %llu\n", (uint64) c->GetCurSize(), (uint64) ct->GetCurSize());
+        //printf("* encCTSize:\t %llu =? %llu\n", (uint64) c->GetCurStats().encCTSize, (uint64) ct->GetCurStats().encCTSize);
+        //printf("* encDBSize:\t %llu =? %llu\n", (uint64) c->GetCurStats().encDbSize, (uint64) ct->GetCurStats().encDbSize);
+        //printf("* numSets:\t\t %llu =? %llu\n", (uint64) c->GetCurNumSets(), (uint64) ct->GetCurNumSets());
 
+        if((uint64) c->GetCurSize()            != (uint64) ct->GetCurSize() || // equal L(DB, CT)?
+           (uint64) c->GetCurStats().encCTSize != (uint64) ct->GetCurStats().encCTSize || // equal L(CT)?
+           (uint64) c->GetCurStats().encDbSize != (uint64) ct->GetCurStats().encDbSize || // equal L(DB|CT)?
+           c->GetCurNumSets()                  != ct->GetCurNumSets()) { // equal number of sets?
+            //printf("* NO EQUALS CT C\n\n");
+            continue;
+
+        }
+        //printf("* Distance:\t %lf\n\n", BerekenAfstandTussen(c->GetDatabase(), ct->GetDatabase(),c ,ct));
         if(BerekenAfstandTussen(c->GetDatabase(), ct->GetDatabase(), c, ct) < epsilon) {
             return true;
         }
